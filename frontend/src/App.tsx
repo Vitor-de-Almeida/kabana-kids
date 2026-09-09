@@ -1,8 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { LandingPage } from "./pages/public/Landing"
 
-
-
 function App() {
   return (
     <BrowserRouter>
