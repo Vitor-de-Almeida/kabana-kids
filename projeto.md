@@ -1,345 +1,295 @@
-# Kabana Kids — Guia Passo a Passo
+# Kabana Kids — Roteiro do projeto
 
-Aplicação web para gestão escolar (Laravel + PostgreSQL + React), com foco em segurança (dados de crianças / LGPD) e evolução incremental.
+Este é o mapa da construção do sistema da escola: o que vamos fazer, em que ordem e **por quê**. Ele foi escrito para quem está aprendendo. Cada passo explica a ideia por trás antes de dizer o que fazer.
 
----
+As regras técnicas detalhadas (o "como exatamente") ficam em `CLAUDE.md` e em `.claude/rules/`. Este roteiro aponta para elas em vez de repeti-las.
 
-## O que é MVP?
-
-**MVP** = *Minimum Viable Product* (Produto Mínimo Viável).
-
-É a **primeira versão que já funciona**, mesmo sendo simples. Não precisa ter tudo pronto, mas precisa:
-
-- Resolver um problema real (ex.: pais se cadastrarem na lista de espera)
-- Estar segura o suficiente para uso real
-- Estar **publicada na internet** para a escola acompanhar
-
-Este projeto está dividido em **4 fases**. Cada fase é um MVP incremental — publique após a Fase 1 e evolua aos poucos.
+**Legenda:** ✅ feito · 🔄 em andamento · ⬜ a fazer · ❓ falta uma decisão sua
 
 ---
 
-## Visão geral
+## Parte 1 — As ideias básicas (first principles)
+
+Antes de construir, vale entender as peças. Usaremos uma comparação que acompanha todo o guia: **o sistema é um restaurante**.
+
+### 1. Cliente e servidor: o salão e a cozinha
+
+- O **salão** é o que as famílias veem: mesas bonitas, cardápio, decoração. No nosso sistema, é o **frontend**, o site que aparece no navegador, feito com **React**.
+- A **cozinha** é onde o trabalho de verdade acontece, longe dos olhos do público. É o **backend**, feito com **Laravel** (linguagem PHP).
+- **Por que separar?** Ninguém do salão pode entrar na cozinha e mexer nas panelas. Se o site (salão) fosse quem decide as regras, qualquer pessoa esperta poderia mudar as regras no próprio navegador dela. Por isso **toda regra importante mora na cozinha**.
+
+### 2. Banco de dados: a despensa com fichas
+
+- O **banco de dados** (PostgreSQL) é um grande armário de fichas organizado em **tabelas**. Cada tabela é uma gaveta (uma para alunos, outra para matrículas) e cada ficha é uma **linha**.
+- Só a cozinha (backend) abre a despensa. O salão nunca toca nela diretamente.
+
+### 3. API: o garçom e o cardápio
+
+- A **API** é o garçom. O salão faz um pedido ("cadastre esta família na lista de espera"), o garçom leva à cozinha e volta com a resposta.
+- O **cardápio** é a lista do que se pode pedir. Cada item é um **endpoint**, por exemplo `POST /api/v1/waitlist-entries` ("criar um cadastro na lista de espera").
+- **Por que uma API?** Porque no futuro haverá um **segundo salão**: o aplicativo de celular. Os dois salões usam o mesmo garçom e a mesma cozinha, então se comportam igual sem duplicar trabalho.
+- O **`v1`** no endereço é a versão do cardápio. Se um dia mudarmos um prato de forma que quebre pedidos antigos, criamos um `v2` e o `v1` continua funcionando para quem ainda usa.
+
+### 4. HTTPS: a carta lacrada
+
+- Quando o navegador conversa com o servidor, a mensagem viaja pela internet passando por muitas "mãos". **HTTPS** é como mandar uma carta num envelope lacrado: só o destinatário consegue ler. Sem ele, seria um cartão-postal que qualquer carteiro lê.
+
+### 5. Autenticação e autorização: o crachá e a chave
+
+- **Autenticação** responde "**quem é você?**". É o login, como mostrar o crachá na portaria.
+- **Autorização** responde "**o que você pode fazer?**". Ter crachá não abre todas as salas. Uma mãe entra para ver **o próprio filho**, nunca o filho de outra família.
+- Os dois são checados **na cozinha** (backend), sempre. Esconder um botão no site não tranca a porta; só tira a placa da frente dela.
+
+### 6. Dados pessoais e a LGPD: as fichas que pertencem às famílias
+
+- A **LGPD** é a lei brasileira que protege dados pessoais. Dados de **crianças** têm proteção extra (artigo 14): é preciso o consentimento claro de um responsável e agir sempre no melhor interesse da criança.
+- O princípio mais importante é a **minimização**: só guardamos o que é realmente necessário. Um dado que não foi coletado não pode vazar.
+- A lista oficial do que coletamos fica em `docs/lgpd-dados-pessoais.md`.
+
+### 7. Git: a máquina do tempo
+
+- O **Git** tira "fotos" do projeto a cada mudança (os **commits**). Se algo der errado, voltamos para uma foto anterior.
+- **Branches** são cópias de rascunho: trabalhamos numa cópia e só juntamos à versão principal (`Main`) quando está pronta e revisada (o **pull request**). Regras em `.claude/rules/git.md`.
+
+### 8. Testes: a prova antes de servir
+
+- Um **teste** é um pequeno programa que confere se outro programa faz o que deveria, por exemplo: "uma mãe tentando ver o filho de outra família recebe *acesso negado*?". Ele roda em segundos, sempre que quisermos, e avisa se algo quebrou.
+
+### 9. Deploy: abrir as portas do restaurante
+
+- Enquanto o sistema roda só no seu computador (**ambiente local**), ninguém mais vê. **Deploy** é colocá-lo num servidor na internet (**produção**) para as famílias usarem.
+
+### 10. MVP: o primeiro prato que já pode ser servido
+
+- **MVP** (Produto Mínimo Viável) é a primeira versão que **já resolve um problema real** e é segura, mesmo simples. Construímos em **fases**: cada fase é um MVP que vai ao ar, e a seguinte acrescenta algo.
+
+---
+
+## Parte 2 — Visão geral
 
 ```
-React (frontend)  ──HTTPS/JSON──►  Laravel (API)  ──►  PostgreSQL
-App mobile (futuro) ──mesma API──►
+Site (React)         ──┐  cookie de sessão
+                       ├── HTTPS / JSON ──►  API Laravel (/api/v1)  ──►  PostgreSQL
+App mobile (futuro)  ──┘  token
 ```
 
-**Ordem de construção:** backend + banco → segurança → frontend → deploy → novas fases.
+O site e o app usam **formas diferentes de provar quem são** (veja a Etapa 2.4), mas falam com a mesma API. Detalhes em `docs/arquitetura.md`.
 
-**Perfis de usuário:**
+### Perfis de usuário
 
 | Perfil | O que faz |
-|--------|-----------|
-| `parent` | Cadastra filhos, acompanha matrícula, vê comunicados |
-| `admin` | Gerencia tudo: alunos, matrículas, turmas, pagamentos |
-| `teacher` | Vê suas turmas, registra presença |
+|---|---|
+| `parent` (responsável) | Vê os próprios filhos, acompanha a matrícula, lê comunicados |
+| `teacher` (professor) | Vê as próprias turmas, registra presença |
+| `admin` (escola) | Gerencia alunos, matrículas, turmas e pagamentos, com registro de auditoria |
 
-**Fases de entrega:**
+### Fases de entrega
 
-| Fase | O que entrega |
-|------|---------------|
-| 1 | Site público + lista de espera |
-| 2 | Login + portal pais + painel escola |
-| 3 | Matrícula completa (formulários, documentos, status) |
-| 4 | Turmas, aulas, presença + pagamentos |
+| Fase | O que entrega | Estado |
+|---|---|---|
+| 1 | Site público + lista de espera | 🔄 |
+| 2 | Login + portal das famílias + painel da escola | ⬜ |
+| 3 | Matrícula completa (formulários, documentos, status) | ⬜ |
+| 4 | Turmas, aulas, presença e pagamentos | ⬜ |
+| Futuro | Aplicativo de celular | ⬜ |
 
----
-
-## Estrutura do projeto
+### Estrutura do repositório
 
 ```
-Kabana Kids/
-├── backend/          # Laravel API
-├── frontend/         # React (Vite + TypeScript)
-├── docs/             # Política de privacidade, diagramas
-├── .gitignore
-└── README.md
-```
-
----
-
-## Passo a passo
-
-### Fase 0 — Ambiente local
-
-**1.** Instalar no PC:
-
-- PHP 8.2+ (extensões: `pdo_pgsql`, `mbstring`, `openssl`)
-- Composer — https://getcomposer.org/
-- Node.js 20+ — https://nodejs.org/
-- PostgreSQL 16 — https://www.postgresql.org/download/windows/
-- Git — https://git-scm.com/
-
-**2.** Criar banco local no PostgreSQL:
-
-- Nome: `kabanakids`
-- Usuário dedicado (não use `postgres` em produção)
-- Anotar host, porta, usuário e senha
-
-**3.** Inicializar Git na pasta do projeto:
-
-```bash
-git init
+kabanaKids/
+├── backend/      # A cozinha: API em Laravel
+├── frontend/     # O salão: site em React + Vite + TypeScript + Tailwind
+├── docs/         # Arquitetura, decisões e inventário de dados pessoais (LGPD)
+├── .claude/      # Regras e skills do assistente de IA (somente Markdown)
+├── CLAUDE.md     # Regras gerais do projeto
+├── README.md     # Como instalar e rodar
+└── projeto.md    # Este roteiro
 ```
 
 ---
 
-### Fase 1 — Backend Laravel
+## Parte 3 — Passo a passo
 
-**4.** Criar o projeto:
+### Etapa 0 — Preparar o computador
 
-```bash
-composer create-project laravel/laravel backend
-```
+**O que é:** instalar as ferramentas que transformam o código em um sistema funcionando, como montar a cozinha antes de cozinhar.
 
-**5.** Configurar `backend/.env`:
+| Ferramenta | Para que serve | Estado |
+|---|---|---|
+| PHP 8.3+ (com `pdo_pgsql`, `mbstring`, `openssl`) | A linguagem que roda o backend | ✅ 8.3 |
+| Composer | Baixa as bibliotecas do PHP | ✅ |
+| Node.js 20+ | Roda as ferramentas do frontend | ✅ 24 |
+| Git | A máquina do tempo | ✅ |
+| PostgreSQL 16 | O banco de dados | ❓ confira se está instalado e rodando |
 
-```env
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=kabanakids
-DB_USERNAME=seu_usuario
-DB_PASSWORD=sua_senha
-```
+**0.1** ❓ Criar o banco local chamado `kabanakids`, com um usuário próprio do projeto (não o usuário `postgres`, que é o "dono de tudo").
+*Por quê:* **menor privilégio**. Se a chave do projeto vazar, ela abre só a gaveta do projeto, não o prédio inteiro.
 
-**6.** Testar conexão com o banco:
+**0.2** ✅ Criar o projeto Laravel (`backend/`) e o projeto React (`frontend/`).
 
-```bash
-cd backend
-php artisan migrate
-```
-
-**7.** Instalar autenticação API (Laravel Sanctum):
-
-```bash
-composer require laravel/sanctum
-php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
-php artisan migrate
-```
-
-**8.** Criar tabelas **por fase** (não crie tudo de uma vez):
-
-*Fase 1 — núcleo:*
-
-| Tabela | Campos essenciais |
-|--------|-------------------|
-| `users` | nome, email, senha, `role` (admin/parent/teacher) |
-| `waitlist_entries` | nome_responsavel, email, telefone, nome_crianca, data_nascimento, status |
-
-*Fase 2 — portal:*
-
-| Tabela | Campos essenciais |
-|--------|-------------------|
-| `students` | nome, data_nascimento, `user_id` |
-| `announcements` | titulo, conteudo, `author_id`, publicado_em |
-
-*Fase 3 — matrícula:*
-
-| Tabela | Campos essenciais |
-|--------|-------------------|
-| `enrollments` | `student_id`, status, ano_letivo, observacoes |
-| `documents` | `enrollment_id`, tipo, caminho_arquivo, status |
-
-*Fase 4 — turmas e pagamentos:*
-
-| Tabela | Campos essenciais |
-|--------|-------------------|
-| `classes` | nome, ano_letivo, `teacher_id` |
-| `class_student` | `class_id`, `student_id` |
-| `lessons` | `class_id`, data, conteudo |
-| `attendances` | `lesson_id`, `student_id`, presente |
-| `payments` | `enrollment_id`, valor, status, gateway_ref |
-
-**9.** Criar migrations, models, controllers e rotas API por fase.
-
-- Começar com: `POST /api/waitlist` (público) e `/api/auth/*`
-- Usar prefixo `/api/v1/` desde o início (prepara mobile)
-
-**10.** Configurar CORS para aceitar só o domínio do React (local e produção).
+**0.3** ❓ Preencher o arquivo `backend/.env` com os dados do banco (`DB_*`) e rodar `php artisan migrate` para criar as tabelas iniciais.
+*O que é o `.env`:* um bilhete com as senhas do sistema, que fica **só no seu computador** e nunca vai para o Git. O `.env.example` é o mesmo bilhete com os campos em branco, para mostrar o formato.
 
 ---
 
-### Segurança (fazer em paralelo com tudo — prioridade máxima)
+### Fase 1 — Site público e lista de espera 🔄
 
-**11.** Senhas: bcrypt/argon2 (padrão Laravel). Nunca salvar senha em texto.
+**Objetivo:** uma família visita o site, gosta da escola e deixa os dados para ser chamada quando houver vaga.
 
-**12.** Perfis de acesso (RBAC):
+**1.1** ✅ **Landing page** (página de apresentação da escola).
 
-- `admin` — vê e edita tudo
-- `parent` — só vê seus filhos
-- `teacher` — só vê suas turmas
+**1.2** ⬜ **Preparar a API** com `php artisan install:api`.
+*O que faz:* cria o arquivo do cardápio (`routes/api.php`) e configura o **Sanctum**, a peça do Laravel que cuida dos crachás (login). O Sanctum já foi baixado, mas ainda não está configurado.
+*Por que este comando, e não o `composer require laravel/sanctum` da versão antiga deste roteiro:* nas versões novas do Laravel, este comando faz tudo de uma vez e do jeito oficial.
 
-**13.** Em toda rota sensível, verificar permissão:
+**1.3** ⬜ **Tabela e endpoint da lista de espera** (skill `novo-endpoint`).
 
-- Pai: "este aluno é meu?"
-- Professor: "esta turma é minha?"
-- Admin: acesso total + log de auditoria em ações críticas
+| Tabela | O que guarda |
+|---|---|
+| `waitlist_entries` | Os campos listados em `docs/lgpd-dados-pessoais.md`, mais `status` e o registro do consentimento (data/hora e versão da política) |
 
-**14.** Rate limiting no login (`throttle`) contra brute force.
+- Endereço: `POST /api/v1/waitlist-entries`. É uma rota **pública** (não precisa de login), então leva **rate limit**: no máximo algumas tentativas por minuto.
+  *Por quê:* sem limite, um robô poderia mandar milhares de cadastros falsos por minuto e lotar a despensa.
+- A resposta **não devolve** os dados da criança. Quem enviou já sabe o que enviou; repetir só cria mais chances de vazar.
 
-**15.** Tokens Sanctum com expiração; logout invalida o token.
+**1.4** ⬜ **Ligar o formulário à API** (skill `novo-servico`), incluindo o **proxy do Vite**.
+*O que é o proxy:* no seu computador, o site roda num endereço (`localhost:5173`) e a API em outro (`localhost:8000`). O proxy faz o site achar que os dois estão no mesmo lugar, como um garçom que leva o pedido para a cozinha do prédio ao lado sem a família perceber.
 
-**16.** Coletar só dados necessários (LGPD — minimização):
+**1.5** ⬜ **Política de Privacidade** (skill `nova-pagina`), publicada **antes** de coletar dados reais.
+*Por quê:* a LGPD exige que a família saiba o que acontece com os dados **antes** de entregá-los. O link do formulário hoje aponta para lugar nenhum.
 
-- MVP: nome, data de nascimento, responsável
-- Evitar CPF, foto, endereço até ser obrigatório
+**1.6** ⬜ Resolver as **pendências da LGPD** listadas no fim de `docs/lgpd-dados-pessoais.md` (prazos de guarda dos dados, canal para pedidos das famílias, encarregado de dados).
 
-**17.** Dados de crianças: nunca em rotas públicas; nunca em logs.
+**1.7** ❓ **Como a escola vai ver os cadastros na Fase 1?** O painel da escola só chega na Fase 2. Veja as opções em "Decisões pendentes".
 
-**18.** Escrever Política de Privacidade e Termos de Uso (menores + consentimento do responsável).
-
-**19.** HTTPS obrigatório em produção.
-
-**20.** Variáveis sensíveis só no `.env` — nunca commitar.
-
-**21.** Backups diários do PostgreSQL em produção.
-
-**22.** Atualizar dependências: `composer audit` e `npm audit`.
-
-**Checklist de segurança:**
-
-| Item | Obrigatório? |
-|------|-------------|
-| HTTPS em produção | Sim |
-| Login em rotas privadas | Sim |
-| Autorização por perfil | Sim |
-| Dados mínimos de crianças | Sim |
-| Política de privacidade | Sim (antes de coletar dados) |
-| Backups | Sim (produção) |
-| 2FA para admins | Recomendado (Fase 2) |
+**1.8** ⬜ **Deploy da Fase 1** (Parte 4).
 
 ---
 
-### Frontend React
+### Fase 2 — Login, portal das famílias e painel da escola ⬜
 
-**23.** Criar o frontend:
+**Objetivo:** cada pessoa entra com o próprio login e vê **só o que é dela**.
 
-```bash
-npm create vite@latest frontend -- --template react-ts
-cd frontend && npm install
-```
+| Tabela | O que guarda (planejado) |
+|---|---|
+| `users` (já existe) | `name`, `email`, `password` (embaralhada) e um novo campo `role` (`admin`, `teacher`, `parent`) |
+| `students` | `name`, `birth_date` |
+| `guardian_student` | Quem é responsável por qual criança (❓ ver decisões pendentes) |
+| `announcements` | `title`, `body`, `author_id`, `published_at` |
 
-**24.** Instalar: `axios` (ou fetch nativo) + `react-router-dom`.
+> Todo campo com dado pessoal entra **antes** no inventário `docs/lgpd-dados-pessoais.md`.
 
-**25.** Estrutura de pastas:
+**2.1** **Senhas embaralhadas (hash).**
+*O que é:* a senha nunca é guardada como foi digitada. Ela passa por uma "máquina de moer" que só funciona num sentido: dá para conferir se uma senha está certa, mas não dá para descobrir a senha olhando a ficha. O Laravel já faz isso.
 
-```
-frontend/src/
-  pages/
-    public/       # Landing, CadastroInteresse
-    parent/       # DashboardPais, MeusFilhos, Comunicados
-    school/       # DashboardAdmin, Alunos, Matriculas, Turmas
-    auth/         # Login (redireciona por perfil)
-  components/
-  services/       # Chamadas à API
-  hooks/          # useAuth, useRole
-```
+**2.2** **Perfis (`role`).** O perfil de cada pessoa vem **do banco**, nunca do pedido que o navegador envia.
+*Por quê:* se o navegador pudesse dizer "eu sou admin", qualquer um diria.
 
-**26.** Fase 1 — telas públicas:
+**2.3** **Autorização por dono (Policies).** Toda consulta pergunta "isto é seu?": uma mãe vê os filhos dela; um professor, as turmas dele. Trocar um número no endereço não pode dar acesso a outra família.
 
-- Landing page (logo, sobre a escola, CTA)
-- Formulário de lista de espera
-- Link para política de privacidade no formulário
+**2.4** **Login: dois jeitos de provar quem é.**
+- **Site:** **cookie de sessão** que o JavaScript não consegue ler (`HttpOnly`). É como uma pulseira de evento presa no pulso: o site usa, mas um código malicioso não consegue tirá-la e levar embora.
+- **App (futuro):** **token** guardado no cofre do celular.
+- *Correção em relação à versão antiga deste roteiro:* ela previa tokens também no site. Token guardado no navegador pode ser roubado por código malicioso, por isso a decisão D03 em `docs/decisoes.md`.
 
-**27.** Fase 2 — área logada:
+**2.5** **Proteções do login:** no máximo 5 tentativas por minuto; mensagem de erro sempre igual ("E-mail ou senha inválidos"), para não revelar quais e-mails existem; logout que realmente encerra a sessão.
 
-- Login → redireciona por `role`
-- Portal pais: meus filhos, comunicados
-- Painel admin: interessados, alunos, comunicados
-- Painel professor: minhas turmas
+**2.6** **Telas:** login que leva cada perfil ao seu lugar, portal das famílias (meus filhos, comunicados), painel da escola (interessados, alunos, comunicados) e painel do professor (minhas turmas).
 
-**28.** Fase 3 — matrícula: dados → documentos → confirmação → status.
+**2.7** **Auditoria:** toda vez que um `admin` vê em lote, exporta, altera ou apaga dados de crianças, o sistema anota quem fez, o quê e quando, como o livro de registro de uma portaria.
 
-**29.** Fase 4 — turmas e pagamentos: aulas, presença, histórico.
-
-**30.** Proxy no Vite (`vite.config.ts`): `/api` → `http://localhost:8000`.
+**2.8** Recomendado: **verificação em duas etapas (2FA)** para `admin`: além da senha, um código no celular.
 
 ---
 
-### Testar localmente
+### Fase 3 — Matrícula ⬜
 
-**31.** Subir os servidores:
+**Objetivo:** a família faz a matrícula pelo site: dados → documentos → confirmação → acompanha o status.
 
-```bash
-# Terminal 1
-cd backend && php artisan serve
+| Tabela | O que guarda (planejado) |
+|---|---|
+| `enrollments` | `student_id`, `status`, `school_year`, `notes` |
+| `documents` | `enrollment_id`, `type`, `file_path`, `status` |
 
-# Terminal 2
-cd frontend && npm run dev
-```
+**3.1** **Documentos ficam num cofre**, nunca numa pasta pública. Só são baixados por quem tem permissão, e o nome do arquivo é gerado pelo sistema (o nome original pode conter dados pessoais).
 
-**32.** Testar o fluxo da fase atual antes de avançar.
-
-**33.** Commitar no Git ao concluir cada fase.
+**3.2** ❓ **Dados de saúde (alergias, remédios, necessidades especiais).** Uma escola costuma precisar deles, mas a LGPD os trata como **dados sensíveis** (artigo 11). Só serão coletados depois de uma decisão registrada, e guardados **criptografados** (embaralhados de um jeito que só o sistema desfaz).
 
 ---
 
-### Deploy (após Fase 1)
+### Fase 4 — Turmas, presença e pagamentos ⬜
 
-| Componente | Serviço sugerido |
-|------------|------------------|
-| Backend + DB | Railway ou Render |
+| Tabela | O que guarda (planejado) |
+|---|---|
+| `classrooms` | `name`, `school_year`, `teacher_id` |
+| `classroom_student` | Qual aluno está em qual turma |
+| `lessons` | `classroom_id`, `date`, `content` |
+| `attendances` | `lesson_id`, `student_id`, `present` |
+| `payments` | `enrollment_id`, `amount`, `status`, `gateway_reference` |
+
+**4.1** *Correção de nome:* a versão antiga usava a tabela `classes`. Em PHP, `class` é uma **palavra reservada** (a própria linguagem a usa), então não pode virar nome de modelo. Por isso, `classrooms`.
+
+**4.2** **Pagamentos** só depois de o login estar sólido, e sempre por um intermediário certificado (Mercado Pago ou Stripe). **Nunca** guardamos número de cartão: quem cuida disso é o intermediário, como a maquininha do restaurante.
+
+---
+
+## Parte 4 — Colocar no ar (deploy)
+
+| Peça | Sugestão |
+|---|---|
+| Backend + banco | Railway ou Render (❓ ver "local dos dados" abaixo) |
 | Frontend | Vercel ou Netlify |
-| Domínio | Registro.br (~R$40/ano) |
+| Domínio | Registro.br |
 
-**34.** Criar repositório no GitHub + deploy automático (push → site atualiza).
+**D.1** **Mesmo domínio para site e API.** Use, por exemplo, `kabanakids.com.br` (site) e `api.kabanakids.com.br` (API).
+*Por quê:* o cookie de login (a pulseira do evento) só funciona entre endereços da **mesma família de domínio**. Com o site num endereço da Vercel e a API num endereço do Railway, o navegador bloqueia o cookie e o login não funciona.
+Junto com isso, configure o **CORS** e o Sanctum para aceitar pedidos **só** do endereço do site. O CORS é a lista de convidados da API: pedidos vindos de outros sites são recusados na porta.
 
-**35.** PostgreSQL gerenciado no Railway/Render (não use banco local em produção).
+**D.2** **Segredos só nas configurações do servidor** (`APP_KEY`, `DB_*`, `APP_URL`, `FRONTEND_URL`), com `APP_DEBUG=false`.
+*Por quê:* com o modo de depuração ligado, uma página de erro mostra as entranhas do sistema para qualquer visitante.
 
-**36.** Variáveis de ambiente em produção: `DB_*`, `APP_KEY`, `APP_URL`, `FRONTEND_URL`.
+**D.3** **HTTPS ativo** (a maioria das hospedagens faz isso sozinha).
 
-**37.** Rodar migrations: `php artisan migrate --force`.
+**D.4** **Atualizar a estrutura do banco:** `php artisan migrate --force`.
 
-**38.** Build do React: `npm run build` + `VITE_API_URL` apontando para a API.
+**D.5** **Site:** `npm run build` com `VITE_API_URL` apontando para a API. Lembre-se: tudo que começa com `VITE_` fica visível para qualquer visitante, então nunca coloque segredos ali.
 
-**39.** HTTPS ativo (automático na maioria dos hosts).
+**D.6** **Primeiro admin:** criado pelo terminal do servidor (`php artisan tinker`), digitando a senha na hora. **Nunca** escreva uma senha real num arquivo do projeto (como um *seeder*), porque ela iria parar no Git.
 
-**40.** Criar usuário admin via seeder ou `php artisan tinker`.
+**D.7** **Cópias de segurança (backups) diárias** do banco, **criptografadas** e com prazo para serem apagadas. Um backup também contém dados de crianças e precisa da mesma proteção do banco.
 
-**41.** Publicar Fase 1 — landing + lista de espera no ar.
+**D.8** **Verificar as dependências** com `composer audit` e `npm audit` antes de cada deploy. Elas procuram falhas conhecidas nas bibliotecas que usamos.
 
-**42.** Deploy a cada fase concluída.
-
----
-
-### Futuro (mobile e evolução)
-
-**43.** API versionada (`/api/v1/`) — React e app mobile usam a mesma API.
-
-**44.** Mobile: React Native ou Flutter (após Fase 4 estável).
-
-**45.** Pagamentos: Mercado Pago ou Stripe — só com HTTPS + gateway certificado.
-
-**46.** Monitoramento: Sentry para erros.
+**D.9** **Atualização automática:** repositório no GitHub ligado à hospedagem, para que cada versão aprovada na `Main` vá ao ar sozinha.
 
 ---
 
-## Resumo — 12 passos na ordem certa
+## Parte 5 — Futuro
 
-1. Instalar PHP, Composer, Node, PostgreSQL, Git
-2. Criar Laravel + conectar PostgreSQL
-3. Instalar Sanctum + RBAC (admin, parent, teacher)
-4. **Fase 1:** API + React (landing + lista de espera)
-5. Escrever política de privacidade
-6. **Deploy Fase 1** — site no ar
-7. **Fase 2:** login + portal pais + painel escola
-8. **Fase 3:** matrícula com documentos
-9. **Fase 4:** turmas, aulas, presença, pagamentos
-10. Deploy a cada fase
-11. Manter API versionada para mobile
-12. App mobile (quando web estiver estável)
+- **App de celular:** React Native ou Flutter, depois que a Fase 4 estiver estável (decisão D09).
+- **Monitoramento de erros** (por exemplo, Sentry): é uma tecnologia nova, então precisa de autorização, e deve ser configurado para **nunca** enviar dados pessoais.
+
+---
+
+## Decisões pendentes ❓
+
+Estas perguntas precisam da sua resposta antes da etapa correspondente. Elas também estão registradas em `docs/decisoes.md`.
+
+1. **Quantos responsáveis por criança?** (antes da Fase 2) A versão antiga previa um responsável por criança (`user_id` em `students`). Na prática, mãe e pai costumam querer acesso. A proposta é a tabela `guardian_student`, que permite vários (D12).
+2. **Como a escola vê a lista de espera na Fase 1?** (antes do deploy da Fase 1) Opções: (a) antecipar uma tela simples de admin, com login; (b) esperar a Fase 2 e, até lá, consultar pelo terminal. Mandar os dados por e-mail **não é recomendado**: o e-mail espalha dados de crianças por caixas de entrada fora do nosso controle (D13).
+3. **Onde ficam os servidores?** (antes do deploy) Railway e Render não oferecem servidores no Brasil (confirme na contratação), então os dados ficariam no exterior. A LGPD permite, mas com condições (transferência internacional, artigo 33). Vale confirmar com quem cuida da parte jurídica da escola ou escolher uma hospedagem com servidores no Brasil (D14).
+4. **Dados de saúde na matrícula** (antes da Fase 3): veja 3.2.
 
 ---
 
 ## O que NÃO fazer
 
-- Não começar pelo design bonito sem API funcionando
-- Não implementar pagamentos antes de autenticação sólida
-- Não expor dados de crianças sem login
-- Não usar SQLite em produção
-- Não commitar `.env` ou credenciais
+- Não expor dados de crianças sem login, nem em endereços, logs ou e-mails.
+- Não implementar pagamentos antes de o login estar sólido.
+- Não coletar um dado pessoal que não esteja no inventário.
+- Não usar SQLite (banco de teste) em produção.
+- Não commitar `.env`, senhas ou dados reais.
+- Não pular os testes nem a revisão de segurança para "ganhar tempo".
 
 ---
 
@@ -347,6 +297,6 @@ cd frontend && npm run dev
 
 - Laravel: https://laravel.com/docs
 - Sanctum: https://laravel.com/docs/sanctum
-- React + Vite: https://vitejs.dev/guide/
+- React: https://react.dev
+- Vite: https://vite.dev/guide/
 - LGPD (ANPD): https://www.gov.br/anpd/pt-br
-- Mercado Pago: https://www.mercadopago.com.br/developers

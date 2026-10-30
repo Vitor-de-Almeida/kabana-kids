@@ -38,3 +38,18 @@ Status possíveis: **Aceita**, **Pendente** (precisa de decisão do responsável
 
 ### D11 — Orientações do assistente de IA só em Markdown
 **Aceita · 2026-10-30.** A pasta `.claude/` guarda apenas regras (`rules/*.md`) e skills (`skills/*/SKILL.md`). Os hooks em JavaScript e o `settings.json` foram removidos: o objetivo é ensinar o padrão por instruções documentadas, sem scripts que alterem o ambiente de desenvolvimento. Consequência: a formatação (Pint, ESLint) e o bloqueio de leitura do `.env` deixam de ser automáticos e passam a depender das regras escritas (`CLAUDE.md` e a tabela de verificações). As orientações de visual e acessibilidade saíram de `frontend.md` para `design.md`.
+
+### D12 — Vários responsáveis por criança
+**Pendente.** O `projeto.md` original previa `user_id` em `students` (um responsável por criança). Proposta: tabela `guardian_student`, permitindo mais de um responsável (ex.: mãe e pai), cada um com o próprio login. Decidir antes da Fase 2.
+
+### D13 — Como a escola consulta a lista de espera na Fase 1
+**Pendente.** O painel da escola só existe na Fase 2. Opções: antecipar uma tela de admin com login, ou consultar pelo terminal até a Fase 2. Envio dos cadastros por e-mail não é recomendado (espalha dados de crianças fora do sistema). Decidir antes do deploy da Fase 1.
+
+### D14 — Hospedagem e local dos dados
+**Pendente.** Railway e Render não têm servidores no Brasil, o que caracteriza transferência internacional de dados (LGPD, Art. 33). Além disso, o login por cookie (D03) exige que site e API fiquem no mesmo domínio (ex.: `kabanakids.com.br` e `api.kabanakids.com.br`). Decidir antes do deploy da Fase 1.
+
+### D15 — Tabela de turmas se chama `classrooms`
+**Aceita · 2026-10-30.** O `projeto.md` original usava `classes`, mas `class` é palavra reservada do PHP e não pode ser nome de model. A tabela passa a ser `classrooms` (model `Classroom`), com a tabela de ligação `classroom_student`.
+
+### D16 — Explicações didáticas ao responsável pelo projeto
+**Aceita · 2026-10-30.** O responsável está aprendendo programação. O `CLAUDE.md` ganhou a seção "Como explicar ao responsável pelo projeto" e o `projeto.md` foi reescrito com explicações dos princípios básicos de cada etapa, corrigido para refletir as regras atuais e marcado com o estado de cada passo.

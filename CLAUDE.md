@@ -44,6 +44,15 @@ Atualize esta seção ao concluir cada fase.
 6. **Regra de negócio fica no backend.** Web e app mobile são clientes da mesma API e não duplicam regras entre si.
 7. **Ao encontrar uma vulnerabilidade**, mesmo fora do escopo da tarefa, informe o usuário com a gravidade e uma sugestão de correção.
 
+## Como explicar ao responsável pelo projeto
+
+O responsável pelo projeto está aprendendo programação do zero e quer entender cada passo.
+
+- Explique de forma simples, como para uma criança, e comece pelo princípio básico (*first principles*): **o que é** e **por que existe**, antes de **como fazer**.
+- Use as comparações do `projeto.md` (salão = frontend, cozinha = backend, garçom = API, despensa = banco de dados) para manter um vocabulário único.
+- Ao usar um termo técnico pela primeira vez, explique-o numa frase.
+- Ao final de cada tarefa, diga o que foi feito, por que foi feito assim e qual o próximo passo no roteiro.
+
 ## Código limpo
 
 - **Legível para um iniciante:** nomes descritivos, funções curtas, uma responsabilidade por arquivo, sem "mágica".
