@@ -193,6 +193,7 @@ kabanaKids/
 - *Correção em relação à versão antiga deste roteiro:* ela previa tokens também no site. Token guardado no navegador pode ser roubado por código malicioso, por isso a decisão D03 em `docs/decisoes.md`.
 
 **2.5** **Proteções do login:** no máximo 5 tentativas por minuto; mensagem de erro sempre igual ("E-mail ou senha inválidos"), para não revelar quais e-mails existem; logout que realmente encerra a sessão.
+- ⚠️ **Não esquecer:** trocar o identificador da sessão logo após o login (`$request->session()->regenerate()`) e também quando o perfil de alguém mudar. Assim, um número de sessão roubado antes do login não serve para nada. O logout invalida a sessão. Cada um desses passos precisa de teste (D17).
 
 **2.6** **Telas:** login que leva cada perfil ao seu lugar, portal das famílias (meus filhos, comunicados), painel da escola (interessados, alunos, comunicados) e painel do professor (minhas turmas).
 

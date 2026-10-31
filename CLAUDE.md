@@ -66,7 +66,7 @@ O responsável pelo projeto está aprendendo programação do zero e quer entend
 - Comente o **porquê**, não o quê. Se o código precisa de comentário para explicar o que faz, melhore os nomes primeiro.
 - Seja breve: uma linha costuma bastar.
 - Comente decisões não óbvias, restrições de segurança e limitações temporárias. Exemplo do projeto:
-  `// Ainda sem backend: quando a API POST /api/waitlist existir, o envio acontece aqui.`
+  `// Ainda sem backend: quando a API POST /api/v1/waitlist-entries existir, o envio acontece aqui.`
 - Não escreva comentários que repetem o código, cabeçalhos decorativos ou `TODO` sem contexto. Todo `TODO` diz o que falta e por quê.
 - Docblocks só quando acrescentam informação que o tipo não expressa (por exemplo `@return array<string, string>` em PHP).
 

@@ -15,7 +15,7 @@ const campo =
 export function WaitlistForm() {
   const [enviado, setEnviado] = useState(false)
 
-  // Ainda sem backend: quando a API `POST /api/waitlist` existir, o envio acontece aqui.
+  // Ainda sem backend: quando a API `POST /api/v1/waitlist-entries` existir, o envio acontece aqui.
   function handleSubmit(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     setEnviado(true)
