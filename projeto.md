@@ -4,7 +4,9 @@ Este é o mapa da construção do sistema da escola: o que vamos fazer, em que o
 
 As regras técnicas detalhadas (o "como exatamente") ficam em `CLAUDE.md` e em `.claude/rules/`. Este roteiro aponta para elas em vez de repeti-las.
 
-**Legenda:** ✅ feito · 🔄 em andamento · ⬜ a fazer · ❓ falta uma decisão sua
+**Legenda:** 🔄 em andamento · ⬜ a fazer · ❓ falta uma decisão sua
+
+Os passos já concluídos são removidos deste roteiro; o que está aqui é o que ainda falta.
 
 ---
 
@@ -114,20 +116,8 @@ kabanaKids/
 
 **O que é:** instalar as ferramentas que transformam o código em um sistema funcionando, como montar a cozinha antes de cozinhar.
 
-| Ferramenta | Para que serve | Estado |
-|---|---|---|
-| PHP 8.3+ (com `pdo_pgsql`, `mbstring`, `openssl`) | A linguagem que roda o backend | ✅ 8.3 |
-| Composer | Baixa as bibliotecas do PHP | ✅ |
-| Node.js 20+ | Roda as ferramentas do frontend | ✅ 24 |
-| Git | A máquina do tempo | ✅ |
-| PostgreSQL 16 | O banco de dados | ❓ confira se está instalado e rodando |
-
-**0.1** ❓ Criar o banco local chamado `kabanakids`, com um usuário próprio do projeto (não o usuário `postgres`, que é o "dono de tudo").
+**0.1** ❓ Criar um **usuário próprio do projeto** no PostgreSQL e trocar o `DB_USERNAME` do `backend/.env` por ele. Hoje o backend conecta com o usuário `postgres`, o "dono de tudo". O banco existe com o nome `KabanaKids`.
 *Por quê:* **menor privilégio**. Se a chave do projeto vazar, ela abre só a gaveta do projeto, não o prédio inteiro.
-
-**0.2** ✅ Criar o projeto Laravel (`backend/`) e o projeto React (`frontend/`).
-
-**0.3** ❓ Preencher o arquivo `backend/.env` com os dados do banco (`DB_*`) e rodar `php artisan migrate` para criar as tabelas iniciais.
 *O que é o `.env`:* um bilhete com as senhas do sistema, que fica **só no seu computador** e nunca vai para o Git. O `.env.example` é o mesmo bilhete com os campos em branco, para mostrar o formato.
 
 ---
@@ -135,8 +125,6 @@ kabanaKids/
 ### Fase 1 — Site público e lista de espera 🔄
 
 **Objetivo:** uma família visita o site, gosta da escola e deixa os dados para ser chamada quando houver vaga.
-
-**1.1** ✅ **Landing page** (página de apresentação da escola).
 
 **1.2** ⬜ **Preparar a API** com `php artisan install:api`.
 *O que faz:* cria o arquivo do cardápio (`routes/api.php`) e configura o **Sanctum**, a peça do Laravel que cuida dos crachás (login). O Sanctum já foi baixado, mas ainda não está configurado.
