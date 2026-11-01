@@ -1,11 +1,13 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 
 const links = [
-  { href: "#sobre", label: "Sobre" },
-  { href: "#turmas", label: "Turmas" },
-  { href: "#rotina", label: "Rotina" },
-  { href: "#galeria", label: "Galeria" },
-  { href: "#depoimentos", label: "Famílias" },
+  { href: "/#sobre", label: "Sobre" },
+  { href: "/#turmas", label: "Turmas" },
+  { href: "/#rotina", label: "Rotina" },
+  { href: "/#galeria", label: "Galeria" },
+  { href: "/#depoimentos", label: "Famílias" },
+  { href: "/#matricula", label: "Matrículas" },
 ]
 
 export function Header() {
@@ -14,7 +16,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-ceu-100/80 bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5 sm:px-8">
-        <a href="#inicio" className="flex items-center gap-3">
+        <a href="/#inicio" className="flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-ceu-300 to-lilas-300 shadow-sm">
             <svg viewBox="0 0 24 24" className="h-6 w-6 text-white" fill="currentColor">
               <path d="M12 3.6 3 9.2V21h6v-5.4a3 3 0 0 1 6 0V21h6V9.2L12 3.6Z" />
@@ -38,12 +40,12 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <a
-            href="#lista-de-espera"
+          <Link
+            to="/login"
             className="hidden rounded-full bg-lilas-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-lilas-200 transition hover:bg-lilas-600 sm:block"
           >
-            Lista de espera
-          </a>
+            Entrar
+          </Link>
           <button
             type="button"
             onClick={() => setAberto((valor) => !valor)}
@@ -74,13 +76,13 @@ export function Header() {
               {link.label}
             </a>
           ))}
-          <a
-            href="#lista-de-espera"
+          <Link
+            to="/login"
             onClick={() => setAberto(false)}
             className="mt-3 block rounded-full bg-lilas-500 px-6 py-3 text-center font-bold text-white"
           >
-            Lista de espera
-          </a>
+            Entrar
+          </Link>
         </nav>
       )}
     </header>

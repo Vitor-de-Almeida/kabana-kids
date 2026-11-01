@@ -136,7 +136,7 @@ export function WaitlistForm() {
         type="submit"
         className="mt-6 w-full rounded-full bg-lilas-500 px-8 py-4 font-bold text-white shadow-lg shadow-lilas-200 transition hover:bg-lilas-600"
       >
-        Entrar na lista de espera
+        Quero fazer a matrícula
       </button>
 
       <p className="mt-4 text-center text-xs text-tinta-suave">

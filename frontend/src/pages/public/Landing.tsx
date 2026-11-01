@@ -147,10 +147,10 @@ export function LandingPage() {
 
             <div className="mt-9 flex flex-wrap gap-4">
               <a
-                href="#lista-de-espera"
+                href="#matricula"
                 className="rounded-full bg-lilas-500 px-8 py-4 font-bold text-white shadow-xl shadow-lilas-200 transition hover:bg-lilas-600"
               >
-                Entrar na lista de espera
+                Quero fazer a matrícula
               </a>
               <a
                 href="#sobre"
@@ -287,7 +287,7 @@ export function LandingPage() {
                 </ul>
 
                 <a
-                  href="#lista-de-espera"
+                  href="#matricula"
                   className="mt-8 rounded-full border border-lilas-200 py-3 text-center text-sm font-bold text-lilas-600 transition hover:bg-lilas-50"
                 >
                   Quero saber das vagas
@@ -408,12 +408,12 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Lista de espera */}
-      <section id="lista-de-espera" className="relative overflow-hidden py-20 lg:py-28">
+      {/* Matrícula */}
+      <section id="matricula" className="relative overflow-hidden py-20 lg:py-28">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-lilas-50 via-white to-ceu-50" />
         <div className="mx-auto grid max-w-6xl items-start gap-14 px-5 sm:px-8 lg:grid-cols-[1fr_1.15fr]">
           <div className="lg:sticky lg:top-28">
-            <p className="text-sm font-bold uppercase tracking-widest text-ceu-500">Lista de espera</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-ceu-500">Matrícula</p>
             <h2 className="font-display mt-3 text-3xl font-bold text-tinta sm:text-4xl">
               Garanta a vaga da sua criança
             </h2>
