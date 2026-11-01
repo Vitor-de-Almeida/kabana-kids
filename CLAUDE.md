@@ -13,7 +13,7 @@ Cada orientação mora em **um único lugar**. Em caso de conflito, vale o item 
    - `seguranca.md` (sempre carregada): Security by Design, autenticação, autorização e LGPD.
    - `git.md` (sempre carregada): commits, branches e pull requests.
    - `api.md`: contrato da API compartilhada entre web e mobile.
-   - `backend.md`: arquitetura e padrões do Laravel.
+   - `backend.md`: arquitetura e padrões do backend em Node (Express + Prisma + Zod).
    - `frontend.md`: arquitetura e padrões do React.
    - `design.md`: identidade visual, textos de interface e acessibilidade.
    - `testes.md`: padrões de teste.
@@ -30,13 +30,13 @@ Para mudar uma regra, edite o arquivo onde ela mora (nunca crie uma cópia em ou
 Atualize esta seção ao concluir cada fase.
 
 - **Fase 1 em andamento.** A landing page está pronta; o formulário de lista de espera ainda não envia dados.
-- **Backend:** Laravel 13 recém-criado. O Sanctum está instalado, mas não configurado. Ainda não existem rotas de API.
+- **Backend:** trocado de Laravel para Node.js 26 + TypeScript + Express 5 + Prisma + Zod (D18). Existe só o esqueleto (segurança, CORS, tratamento de erros e `GET /up`); ainda não há rotas em `/api/v1` nem tabelas da escola. Login ainda não escolhido (Fase 2).
 - **Frontend:** sem framework de testes. A verificação é feita com `lint` + `build`.
 - **Mobile:** ainda não iniciado; a tecnologia não foi decidida (ver `docs/decisoes.md`).
 
 ## Regras invioláveis
 
-1. **Não instale, remova nem atualize dependências** (npm, composer) e não introduza novas tecnologias sem autorização explícita. Instalar as dependências já declaradas (`npm install`, `composer install`) é permitido.
+1. **Não instale, remova nem atualize dependências** (npm) e não introduza novas tecnologias sem autorização explícita. Instalar as dependências já declaradas (`npm install`) é permitido. Os pacotes autorizados do backend estão na D18.
 2. **Não altere comportamento existente** sem entender como ele funciona e sem que a tarefa peça. Leia o código envolvido antes de mudar.
 3. **Não presuma.** Se algo não está no código nem na documentação, pergunte.
 4. **Segurança primeiro.** Siga `.claude/rules/seguranca.md`. Entre conveniência e segurança, escolha segurança e explique a troca.
@@ -64,11 +64,11 @@ O responsável pelo projeto está aprendendo programação do zero e quer entend
 ## Comentários
 
 - Comente o **porquê**, não o quê. Se o código precisa de comentário para explicar o que faz, melhore os nomes primeiro.
-- Seja breve: uma linha costuma bastar.
+- **Comentários curtos:** uma linha, com poucas palavras (até ~60 caracteres). Nunca parágrafos nem frases longas. Se não couber, o código precisa de nomes melhores ou a explicação vai para a documentação.
 - Comente decisões não óbvias, restrições de segurança e limitações temporárias. Exemplo do projeto:
   `// Ainda sem backend: quando a API POST /api/v1/waitlist-entries existir, o envio acontece aqui.`
 - Não escreva comentários que repetem o código, cabeçalhos decorativos ou `TODO` sem contexto. Todo `TODO` diz o que falta e por quê.
-- Docblocks só quando acrescentam informação que o tipo não expressa (por exemplo `@return array<string, string>` em PHP).
+- Comentários de documentação (JSDoc) só quando acrescentam informação que o tipo não expressa (por exemplo, o formato esperado de uma data).
 
 ## Fluxo de trabalho
 
@@ -81,7 +81,7 @@ O responsável pelo projeto está aprendendo programação do zero e quer entend
 
 | Área alterada | Verificação obrigatória |
 |---|---|
-| `backend/` | `cd backend && php artisan test` e `vendor/bin/pint --test` |
+| `backend/` | `cd backend && npm run typecheck && npm test` |
 | `frontend/` | `cd frontend && npm run lint && npm run build` |
 
 ## Quando atualizar a documentação

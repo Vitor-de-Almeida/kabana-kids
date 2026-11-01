@@ -1,8 +1,7 @@
 ---
 paths:
   - "backend/tests/**"
-  - "backend/database/factories/**"
-  - "backend/app/**"
+  - "backend/src/**"
   - "frontend/src/**/*.test.*"
 ---
 
@@ -10,23 +9,24 @@ paths:
 
 Teste o comportamento que importa para o usuário e para a segurança, não detalhes de implementação.
 
-## Backend (PHPUnit)
+## Backend (Vitest)
 
-- **Todo endpoint tem testes de Feature** em `tests/Feature/Api/V1/<Recurso>/` cobrindo, no mínimo:
+- **Todo endpoint tem testes** em `tests/api/v1/<recurso>/` cobrindo, no mínimo:
   1. o caminho de sucesso (status e formato do JSON);
   2. a validação (`422` com os erros esperados);
   3. o acesso sem login (`401`) em rotas privadas;
   4. o acesso indevido (`403` ou `404`), por exemplo um responsável tentando ver o filho de outra família;
   5. o rate limit em rotas públicas e de autenticação.
-- Testes de **Unit** (`tests/Unit/`) para Actions com regras não triviais e para Enums com lógica.
+- Os testes de API ligam o servidor numa porta livre com `startTestServer()` (`tests/helpers.ts`) e chamam a API com o `fetch` nativo do Node. Não é preciso outra biblioteca.
+- Testes de unidade (`tests/unit/`) para Actions com regras não triviais.
 - Policies têm testes cobrindo cada perfil (`admin`, `teacher`, `parent`).
-- Nomes de métodos em inglês e `snake_case` descrevendo o comportamento (padrão de `ExampleTest.php`): `test_parent_cannot_view_another_familys_student`.
+- Descrições em inglês, dizendo o comportamento (`it("blocks a parent from viewing another family's student")`), agrupadas por `describe` com o nome do recurso ou da rota.
 - Organize cada teste em três blocos, separados por linha em branco: preparar, agir e verificar.
-- Use factories com Faker para criar dados. Nunca use nomes, e-mails ou telefones reais.
-- Use o trait `RefreshDatabase` em testes que tocam o banco.
-- Verifique também o que **não** pode vazar: campos ocultos ausentes no JSON (`assertJsonMissingPath`).
-- Os testes rodam em SQLite em memória (`phpunit.xml`). Se uma funcionalidade depender de recurso específico do PostgreSQL, avise o usuário.
-- Comandos: `php artisan test` (tudo) e `php artisan test --filter=NomeDoTeste` (um teste).
+- Cada arquivo começa com um comentário dizendo o que testa, e cada teste tem um comentário curto acima dizendo o que verifica, em português (regra de comentários curtos do `CLAUDE.md`).
+- Dados de teste sempre fictícios (ex.: `ana@example.com`, telefone `(11) 90000-0000`). Nunca use nomes, e-mails ou telefones reais.
+- Verifique também o que **não** pode vazar: campos ocultos ausentes no JSON (`expect(body.data).not.toHaveProperty("child_name")`).
+- **Banco de testes:** os testes que tocam o banco usam um PostgreSQL separado (`kabana_kids_test`), nunca o banco de desenvolvimento, e limpam as tabelas antes de cada teste. A configuração é criada junto com o primeiro endpoint que usa o banco.
+- Comandos: `npm test` (tudo) e `npx vitest run tests/caminho/arquivo.test.ts` (um arquivo). Mais `npm run typecheck` para conferir os tipos.
 
 ## Frontend
 

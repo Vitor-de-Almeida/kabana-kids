@@ -4,44 +4,46 @@ Esta é a regra de maior prioridade do projeto. O sistema guarda dados de crian�
 
 ## Princípios
 
-- **Negar por padrão:** toda rota exige autenticação, exceto as listadas como públicas em `backend/routes/api.php`.
+- **Negar por padrão:** toda rota exige autenticação, exceto as listadas como públicas em `backend/src/routes/v1.ts`.
 - **Menor privilégio:** cada perfil (`admin`, `teacher`, `parent`) acessa só o que precisa.
 - **Nunca confie no cliente:** a validação do frontend serve à experiência do usuário; a que protege é a do backend. O app mobile pode ser modificado pelo usuário.
 - **Defesa em profundidade:** autenticação, autorização, validação e auditoria se somam; nenhuma substitui outra.
 - **Minimização:** colete, mostre e guarde o mínimo de dados pessoais possível.
 
-## Autenticação (Laravel Sanctum)
+## Autenticação
 
-- **Web:** autenticação de SPA do Sanctum, com cookie de sessão `HttpOnly` + `Secure` + `SameSite=Lax` e proteção CSRF (`/sanctum/csrf-cookie`).
-- **Mobile:** token de API do Sanctum, guardado no armazenamento seguro do sistema (Keychain no iOS, Keystore no Android).
+A ferramenta de login será escolhida na Fase 2 (D18) e precisa cumprir todas as regras abaixo.
+
+- **Web:** cookie de sessão `HttpOnly` + `Secure` + `SameSite=Lax`, com proteção CSRF.
+- **Mobile:** token de API, guardado no armazenamento seguro do sistema (Keychain no iOS, Keystore no Android).
 - **Nunca** guarde token ou sessão em `localStorage`, `sessionStorage`, URL ou log.
 - Tokens têm expiração. O logout revoga o token ou a sessão atual.
 - Login com rate limit (no máximo 5 tentativas por minuto por e-mail + IP).
 - Mensagens de erro genéricas: "E-mail ou senha inválidos". Nunca revele se um e-mail está cadastrado (também na recuperação de senha).
-- Senhas: use o cast `'password' => 'hashed'` e a regra `Password::defaults()`. Nunca registre senhas em log nem as retorne em respostas.
+- Senhas: guarde só o hash, com um algoritmo próprio para senhas (Argon2id ou bcrypt), e exija tamanho mínimo. Nunca registre senhas em log nem as retorne em respostas.
 - 2FA para `admin` é recomendado a partir da Fase 2.
 
 ## Autorização
 
-- Toda ação sobre um recurso passa por uma **Policy** (via `authorize` no FormRequest, `can` na rota ou `Gate`). Não espalhe `if ($user->role === ...)` pelos controllers.
-- Restrinja a consulta ao dono do dado: um responsável busca `$user->students()`, nunca `Student::find($id)` sem Policy. IDs vindos do cliente nunca dão acesso por si só (proteção contra IDOR).
-- O perfil (`role`) vem do banco de dados, nunca da requisição. `role` não pode estar em `#[Fillable]`.
+- Toda ação sobre um recurso passa por uma **Policy** (`src/policies/`), chamada antes da Action. Não espalhe `if (user.role === ...)` pelos controllers.
+- Restrinja a consulta ao dono do dado: um responsável busca só os próprios filhos (filtro pelo usuário logado no `where` do Prisma), nunca `findUnique({ where: { id } })` sem Policy. IDs vindos do cliente nunca dão acesso por si só (proteção contra IDOR).
+- O perfil (`role`) vem do banco de dados, nunca da requisição. `role` nunca entra num schema Zod de entrada.
 - Esconder um botão no frontend não é segurança: o backend precisa negar a ação.
 - Toda ação de `admin` que vê em lote, exporta, altera ou exclui dados de crianças gera um **registro de auditoria** (quem, qual ação, qual alvo pelo ID, quando), sem copiar os dados pessoais para o log.
 
 ## Validação de entrada
 
-- Toda entrada passa por um **FormRequest**. Use `$request->validated()`, nunca `$request->all()` ou `$request->input()` sem validação.
-- Valide tipo, formato, tamanho máximo (`max:`) e valores permitidos (`Rule::enum`, `in:`) de todo campo. Datas de nascimento precisam ser plausíveis (`before:today`, `after:` um limite).
-- Mass assignment: `#[Fillable]` explícito em todo model. Nunca `$guarded = []`.
+- Toda entrada (`body`, `params`, `query`) passa por um **schema Zod** no middleware de validação. Use só os dados validados, nunca `request.body` direto.
+- Valide tipo, formato, tamanho máximo (`.max()`) e valores permitidos (`z.enum`) de todo campo. Datas de nascimento precisam ser plausíveis (no passado e dentro de um limite).
+- Mass assignment: o schema Zod lista os campos aceitos e descarta o resto. Campos de controle (`role`, `status`) nunca vêm do cliente, e a Action passa ao Prisma só os campos esperados.
 
 ## Proteção da API
 
 - **Rate limit** em todas as rotas públicas (ex.: lista de espera) e de autenticação.
 - **CORS** restrito ao domínio do frontend (`FRONTEND_URL`). Nunca `*` em produção.
-- **HTTPS** obrigatório em produção. `APP_DEBUG=false` em produção.
+- **HTTPS** obrigatório em produção. `NODE_ENV=production` em produção.
 - As respostas de erro nunca trazem stack trace, SQL, caminho de arquivo ou dados de outro usuário.
-- **SQL:** use Eloquent ou o Query Builder com bindings. Nunca concatene entrada do usuário em `DB::raw`, `whereRaw` ou `orderByRaw`. Para ordenação dinâmica, use uma lista de colunas permitidas.
+- **SQL:** use os métodos do Prisma. Se precisar de SQL bruto, só `$queryRaw` com template (valores viram parâmetros); nunca `$queryRawUnsafe` nem concatenação de entrada do usuário. Para ordenação dinâmica, use uma lista de colunas permitidas.
 - Cabeçalhos de segurança no servidor ou na hospedagem: HSTS, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `frame-ancestors 'none'`.
 
 ## Frontend
@@ -67,10 +69,10 @@ Esta é a regra de maior prioridade do projeto. O sistema guarda dados de crian�
 - **Direitos do titular:** modele pensando em acesso, correção e exclusão. Exclusão significa remover ou anonimizar de verdade; soft delete sozinho não basta.
 - **Retenção:** todo dado tem prazo definido no inventário. Dados vencidos são excluídos ou anonimizados.
 - **Imagens de crianças reais** só com autorização escrita do responsável. O site público usa imagens de banco ou sem identificação.
-- **Dados de teste, seeders e exemplos** são sempre fictícios (Faker). Nunca use dados reais.
+- **Dados de teste, seeders e exemplos** são sempre fictícios. Nunca use dados reais.
 
 ## Segredos e dependências
 
 - `.env` nunca é commitado. O `.env.example` contém só placeholders.
 - Se um segredo vazar (commit, log, print), considere-o comprometido: avise o usuário e troque-o.
-- Rode `composer audit` e `npm audit` antes de cada deploy e informe o resultado.
+- Rode `npm audit` no `backend/` e no `frontend/` antes de cada deploy e informe o resultado.

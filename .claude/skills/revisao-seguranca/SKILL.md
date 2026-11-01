@@ -17,23 +17,23 @@ Revise **o que mudou** (`git diff` e `git diff --staged`; para uma branch, `git 
 - [ ] Os seeders, factories e testes usam somente dados fictícios?
 
 **Acesso**
-- [ ] Toda rota nova é privada (`auth:sanctum`) ou está explicitamente marcada como pública e com `throttle`?
+- [ ] Toda rota nova é privada (middleware de login) ou está explicitamente marcada como pública e com limite de tentativas (`express-rate-limit`)?
 - [ ] Toda ação sobre um recurso passa por uma Policy? Um responsável consegue acessar dados de outra família trocando o ID? (Deve receber 403 ou 404.)
 - [ ] O `role` vem do banco e não pode ser enviado pelo cliente?
 - [ ] Existe teste para o acesso indevido?
 
 **Entrada e saída**
-- [ ] O FormRequest valida todos os campos, com tamanho máximo? O código usa `validated()`?
-- [ ] Os models usam `#[Fillable]` explícito, sem campos de controle (`role`, `status`)?
-- [ ] Não há SQL bruto com entrada do usuário nem `dangerouslySetInnerHTML` com conteúdo externo?
+- [ ] O schema Zod valida todos os campos, com tamanho máximo? O código usa só os dados validados, nunca o `request.body` cru?
+- [ ] Campos de controle (`role`, `status`) ficam fora dos schemas de entrada e a Action passa ao Prisma só os campos esperados?
+- [ ] Não há `$queryRawUnsafe`, SQL concatenado com entrada do usuário nem `dangerouslySetInnerHTML` com conteúdo externo?
 - [ ] Os uploads usam disco privado, validação de tipo e tamanho e nome gerado?
 
 **Segredos e configuração**
 - [ ] Nenhum segredo, token ou `.env` no diff? Nenhuma variável `VITE_*` com segredo?
 - [ ] As mudanças de CORS, sessão ou cookies continuam restritas e seguras?
 
-**Dependências** (só se houve mudança autorizada em `composer.lock` ou `package-lock.json`)
-- [ ] Rodar `composer audit` e/ou `npm audit` e reportar o resultado.
+**Dependências** (só se houve mudança autorizada em um `package-lock.json`)
+- [ ] Rodar `npm audit` na pasta alterada (`backend/` ou `frontend/`) e reportar o resultado.
 
 ## Como reportar
 

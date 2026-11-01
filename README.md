@@ -6,7 +6,7 @@ Sistema da escola de educação infantil Kabana Kids: site público com lista de
 
 ```
 kabanaKids/
-├── backend/     # API em Laravel (PHP), única fonte das regras de negócio
+├── backend/     # API em Node.js (Express + Prisma + TypeScript), única fonte das regras de negócio
 ├── frontend/    # Site em React + Vite + TypeScript + Tailwind
 ├── docs/        # Arquitetura, decisões e inventário de dados pessoais (LGPD)
 ├── .claude/     # Regras e skills do assistente de IA (somente Markdown)
@@ -16,8 +16,7 @@ kabanaKids/
 
 ## Requisitos
 
-- PHP 8.3+ (extensões `pdo_pgsql`, `mbstring`, `openssl`) e Composer
-- Node.js 20+
+- Node.js 26 (LTS)
 - PostgreSQL 16
 
 ## Como rodar localmente
@@ -26,11 +25,11 @@ kabanaKids/
 
 ```bash
 cd backend
-composer install
-cp .env.example .env        # depois preencha DB_* com o seu PostgreSQL local
-php artisan key:generate
-php artisan migrate
-php artisan serve
+npm install
+cp .env.example .env        # depois preencha com os seus valores (DATABASE_URL e demais)
+npm run db:generate         # gera o código do Prisma a partir de prisma/schema.prisma
+npm run db:migrate          # cria ou atualiza as tabelas no banco
+npm run dev                 # liga a API e reinicia sozinha a cada alteração
 ```
 
 **Frontend** (http://localhost:5173):
@@ -41,13 +40,25 @@ npm install
 npm run dev
 ```
 
+## Variáveis de ambiente do backend
+
+| Variável | Para quê |
+|---|---|
+| `NODE_ENV` | `development`, `test` ou `production` |
+| `PORT` | Porta da API (padrão `8000`) |
+| `FRONTEND_URL` | Endereço do site; só ele pode chamar a API (CORS) |
+| `DATABASE_URL` | Conexão com o PostgreSQL, com o usuário da aplicação (nunca o `postgres`) |
+
 ## Comandos úteis
 
 | Onde | Comando | Para quê |
 |---|---|---|
-| `backend/` | `php artisan test` | Roda os testes (PHPUnit) |
-| `backend/` | `vendor/bin/pint` | Formata o código PHP (`--test` só verifica) |
-| `backend/` | `composer audit` | Procura vulnerabilidades nas dependências |
+| `backend/` | `npm run dev` | Liga a API em modo de desenvolvimento |
+| `backend/` | `npm test` | Roda os testes (Vitest) |
+| `backend/` | `npm run typecheck` | Confere os tipos do TypeScript |
+| `backend/` | `npm run db:migrate` | Cria uma migration a partir do `schema.prisma` e aplica no banco local |
+| `backend/` | `npm run db:deploy` | Aplica as migrations em produção |
+| `backend/` | `npm audit` | Procura vulnerabilidades nas dependências |
 | `frontend/` | `npm run lint` | Analisa o código com ESLint |
 | `frontend/` | `npm run build` | Checa os tipos e gera a versão de produção |
 | `frontend/` | `npm audit` | Procura vulnerabilidades nas dependências |

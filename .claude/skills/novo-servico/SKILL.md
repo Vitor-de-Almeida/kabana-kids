@@ -17,17 +17,17 @@ import axios from "axios"
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "/api/v1",
   headers: { Accept: "application/json" },
-  // Sessão do Sanctum por cookie HttpOnly: nenhum token fica acessível ao JavaScript
+  // Sessão por cookie HttpOnly: nenhum token fica acessível ao JavaScript
   withCredentials: true,
   withXSRFToken: true,
 })
 ```
 
-Em desenvolvimento, o Vite precisa encaminhar `/api` e `/sanctum` para `http://localhost:8000` (opção `server.proxy` em `vite.config.ts`). Se o proxy não existir, proponha a alteração ao usuário antes de fazê-la.
+Em desenvolvimento, o Vite precisa encaminhar `/api` para `http://localhost:8000` (opção `server.proxy` em `vite.config.ts`). Se o proxy não existir, proponha a alteração ao usuário antes de fazê-la.
 
 ## 2. Tipos
 
-`frontend/src/types/<recurso>.ts`, espelhando o Resource e o FormRequest do backend (campos em `snake_case`):
+`frontend/src/types/<recurso>.ts`, espelhando o Resource e o schema Zod do backend (campos em `snake_case`):
 
 ```ts
 export type WaitlistEntryInput = {

@@ -17,7 +17,7 @@ Antes de construir, vale entender as peças. Usaremos uma comparação que acomp
 ### 1. Cliente e servidor: o salão e a cozinha
 
 - O **salão** é o que as famílias veem: mesas bonitas, cardápio, decoração. No nosso sistema, é o **frontend**, o site que aparece no navegador, feito com **React**.
-- A **cozinha** é onde o trabalho de verdade acontece, longe dos olhos do público. É o **backend**, feito com **Laravel** (linguagem PHP).
+- A **cozinha** é onde o trabalho de verdade acontece, longe dos olhos do público. É o **backend**, feito com **Node.js** e **Express**, na linguagem **TypeScript** (a mesma do site).
 - **Por que separar?** Ninguém do salão pode entrar na cozinha e mexer nas panelas. Se o site (salão) fosse quem decide as regras, qualquer pessoa esperta poderia mudar as regras no próprio navegador dela. Por isso **toda regra importante mora na cozinha**.
 
 ### 2. Banco de dados: a despensa com fichas
@@ -71,7 +71,7 @@ Antes de construir, vale entender as peças. Usaremos uma comparação que acomp
 
 ```
 Site (React)         ──┐  cookie de sessão
-                       ├── HTTPS / JSON ──►  API Laravel (/api/v1)  ──►  PostgreSQL
+                       ├── HTTPS / JSON ──►  API Node (/api/v1)    ──►  PostgreSQL
 App mobile (futuro)  ──┘  token
 ```
 
@@ -99,7 +99,7 @@ O site e o app usam **formas diferentes de provar quem são** (veja a Etapa 2.4)
 
 ```
 kabanaKids/
-├── backend/      # A cozinha: API em Laravel
+├── backend/      # A cozinha: API em Node.js (Express + Prisma)
 ├── frontend/     # O salão: site em React + Vite + TypeScript + Tailwind
 ├── docs/         # Arquitetura, decisões e inventário de dados pessoais (LGPD)
 ├── .claude/      # Regras e skills do assistente de IA (somente Markdown)
@@ -116,7 +116,7 @@ kabanaKids/
 
 **O que é:** instalar as ferramentas que transformam o código em um sistema funcionando, como montar a cozinha antes de cozinhar.
 
-**0.1** ❓ Criar um **usuário próprio do projeto** no PostgreSQL e trocar o `DB_USERNAME` do `backend/.env` por ele. Hoje o backend conecta com o usuário `postgres`, o "dono de tudo". O banco existe com o nome `KabanaKids`.
+**0.1** ✅ Criar um **usuário próprio do projeto** no PostgreSQL. Feito: o banco `kabana_kids` pertence ao usuário `app_fernanda_kabana_kids`, que é o usuário do `DATABASE_URL` no `backend/.env`. O superusuário `postgres` não é usado pelo sistema.
 *Por quê:* **menor privilégio**. Se a chave do projeto vazar, ela abre só a gaveta do projeto, não o prédio inteiro.
 *O que é o `.env`:* um bilhete com as senhas do sistema, que fica **só no seu computador** e nunca vai para o Git. O `.env.example` é o mesmo bilhete com os campos em branco, para mostrar o formato.
 
@@ -126,9 +126,9 @@ kabanaKids/
 
 **Objetivo:** uma família visita o site, gosta da escola e deixa os dados para ser chamada quando houver vaga.
 
-**1.2** ⬜ **Preparar a API** com `php artisan install:api`.
-*O que faz:* cria o arquivo do cardápio (`routes/api.php`) e configura o **Sanctum**, a peça do Laravel que cuida dos crachás (login). O Sanctum já foi baixado, mas ainda não está configurado.
-*Por que este comando, e não o `composer require laravel/sanctum` da versão antiga deste roteiro:* nas versões novas do Laravel, este comando faz tudo de uma vez e do jeito oficial.
+**1.2** ✅ **Preparar a API** (esqueleto em Node, decisão D18).
+*O que foi feito:* a cozinha foi montada com Express. Ela já tem o cardápio vazio (`src/routes/v1.ts`), os cabeçalhos de segurança (`helmet`), a lista de convidados (`cors`), o tratamento de erros que nunca mostra detalhes internos e o endereço `GET /up`, que só responde "estou viva".
+*O que ficou para depois:* os crachás (login) chegam na Fase 2, com uma ferramenta a escolher.
 
 **1.3** ⬜ **Tabela e endpoint da lista de espera** (skill `novo-endpoint`).
 
@@ -168,7 +168,7 @@ kabanaKids/
 > Todo campo com dado pessoal entra **antes** no inventário `docs/lgpd-dados-pessoais.md`.
 
 **2.1** **Senhas embaralhadas (hash).**
-*O que é:* a senha nunca é guardada como foi digitada. Ela passa por uma "máquina de moer" que só funciona num sentido: dá para conferir se uma senha está certa, mas não dá para descobrir a senha olhando a ficha. O Laravel já faz isso.
+*O que é:* a senha nunca é guardada como foi digitada. Ela passa por uma "máquina de moer" que só funciona num sentido: dá para conferir se uma senha está certa, mas não dá para descobrir a senha olhando a ficha. Usaremos um algoritmo próprio para senhas (Argon2id ou bcrypt), escolhido na Fase 2.
 
 **2.2** **Perfis (`role`).** O perfil de cada pessoa vem **do banco**, nunca do pedido que o navegador envia.
 *Por quê:* se o navegador pudesse dizer "eu sou admin", qualquer um diria.
@@ -216,7 +216,7 @@ kabanaKids/
 | `attendances` | `lesson_id`, `student_id`, `present` |
 | `payments` | `enrollment_id`, `amount`, `status`, `gateway_reference` |
 
-**4.1** *Correção de nome:* a versão antiga usava a tabela `classes`. Em PHP, `class` é uma **palavra reservada** (a própria linguagem a usa), então não pode virar nome de modelo. Por isso, `classrooms`.
+**4.1** *Correção de nome:* a versão antiga usava a tabela `classes`. `class` é uma **palavra reservada** (a própria linguagem a usa) em PHP e também em JavaScript/TypeScript, e um nome assim só causa confusão no código. Por isso, `classrooms`.
 
 **4.2** **Pagamentos** só depois de o login estar sólido, e sempre por um intermediário certificado (Mercado Pago ou Stripe). **Nunca** guardamos número de cartão: quem cuida disso é o intermediário, como a maquininha do restaurante.
 
@@ -232,22 +232,22 @@ kabanaKids/
 
 **D.1** **Mesmo domínio para site e API.** Use, por exemplo, `kabanakids.com.br` (site) e `api.kabanakids.com.br` (API).
 *Por quê:* o cookie de login (a pulseira do evento) só funciona entre endereços da **mesma família de domínio**. Com o site num endereço da Vercel e a API num endereço do Railway, o navegador bloqueia o cookie e o login não funciona.
-Junto com isso, configure o **CORS** e o Sanctum para aceitar pedidos **só** do endereço do site. O CORS é a lista de convidados da API: pedidos vindos de outros sites são recusados na porta.
+Junto com isso, configure o **CORS** e o login para aceitarem pedidos **só** do endereço do site. O CORS é a lista de convidados da API: pedidos vindos de outros sites são recusados na porta.
 
-**D.2** **Segredos só nas configurações do servidor** (`APP_KEY`, `DB_*`, `APP_URL`, `FRONTEND_URL`), com `APP_DEBUG=false`.
-*Por quê:* com o modo de depuração ligado, uma página de erro mostra as entranhas do sistema para qualquer visitante.
+**D.2** **Segredos só nas configurações do servidor** (`DATABASE_URL`, `FRONTEND_URL` e os segredos do login), com `NODE_ENV=production`.
+*Por quê:* fora do modo de produção, bibliotecas podem mostrar detalhes internos nos erros, e qualquer visitante veria as entranhas do sistema.
 
 **D.3** **HTTPS ativo** (a maioria das hospedagens faz isso sozinha).
 
-**D.4** **Atualizar a estrutura do banco:** `php artisan migrate --force`.
+**D.4** **Atualizar a estrutura do banco:** `npm run db:deploy` (aplica as migrations sem criar novas).
 
 **D.5** **Site:** `npm run build` com `VITE_API_URL` apontando para a API. Lembre-se: tudo que começa com `VITE_` fica visível para qualquer visitante, então nunca coloque segredos ali.
 
-**D.6** **Primeiro admin:** criado pelo terminal do servidor (`php artisan tinker`), digitando a senha na hora. **Nunca** escreva uma senha real num arquivo do projeto (como um *seeder*), porque ela iria parar no Git.
+**D.6** **Primeiro admin:** criado por um comando de terminal no servidor (a ser escrito na Fase 2), digitando a senha na hora. **Nunca** escreva uma senha real num arquivo do projeto (como um *seeder*), porque ela iria parar no Git.
 
 **D.7** **Cópias de segurança (backups) diárias** do banco, **criptografadas** e com prazo para serem apagadas. Um backup também contém dados de crianças e precisa da mesma proteção do banco.
 
-**D.8** **Verificar as dependências** com `composer audit` e `npm audit` antes de cada deploy. Elas procuram falhas conhecidas nas bibliotecas que usamos.
+**D.8** **Verificar as dependências** com `npm audit` (no `backend/` e no `frontend/`) antes de cada deploy. Elas procuram falhas conhecidas nas bibliotecas que usamos.
 
 **D.9** **Atualização automática:** repositório no GitHub ligado à hospedagem, para que cada versão aprovada na `Main` vá ao ar sozinha.
 
@@ -284,8 +284,11 @@ Estas perguntas precisam da sua resposta antes da etapa correspondente. Elas tam
 
 ## Links úteis
 
-- Laravel: https://laravel.com/docs
-- Sanctum: https://laravel.com/docs/sanctum
+- Node.js: https://nodejs.org/docs/latest-v26.x/api/
+- Express: https://expressjs.com
+- Prisma: https://www.prisma.io/docs
+- Zod: https://zod.dev
+- Vitest: https://vitest.dev
 - React: https://react.dev
 - Vite: https://vite.dev/guide/
 - LGPD (ANPD): https://www.gov.br/anpd/pt-br

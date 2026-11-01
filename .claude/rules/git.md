@@ -33,7 +33,7 @@ security(api): aplica rate limit no login
 
 - Um commit, um assunto. Separe backend, frontend e documentação quando forem independentes.
 - Descrição com no máximo ~72 caracteres, letra minúscula e sem ponto final.
-- Antes de commitar, confira o `git diff --staged`: nada de `.env`, dumps de banco, logs, dados reais, `node_modules`, `vendor` ou `dist`.
+- Antes de commitar, confira o `git diff --staged`: nada de `.env`, `docs/`, dumps de banco, logs, dados reais, `node_modules`, `vendor` ou `dist`.
 - Nunca use `--no-verify` e nunca reescreva o histórico já enviado (`push --force`) sem autorização.
 
 ## Branches

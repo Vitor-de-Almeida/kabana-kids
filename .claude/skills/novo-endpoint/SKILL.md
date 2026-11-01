@@ -1,164 +1,148 @@
 ---
 name: novo-endpoint
-description: Cria um endpoint da API Laravel completo (migration, model, enum, policy, form request, action, resource, controller, rota e testes). Use ao adicionar ou alterar uma rota em /api/v1, uma tabela ou uma regra de negócio no backend.
+description: Cria um endpoint da API Node/Express completo (model e migration do Prisma, schema Zod, action, resource, controller, rota e testes). Use ao adicionar ou alterar uma rota em /api/v1, uma tabela ou uma regra de negócio no backend.
 ---
 
 # Novo endpoint da API
 
 Antes de começar, leia `.claude/rules/backend.md`, `.claude/rules/api.md` e `.claude/rules/seguranca.md`. O exemplo usa a lista de espera (Fase 1); troque os nomes pelo recurso real.
 
-Rode os comandos dentro de `backend/`.
+Rode os comandos dentro de `backend/`. Explique cada etapa ao responsável pelo projeto **antes** de fazê-la.
 
 ## 0. Pré-requisitos
 
 - **Dados pessoais:** os campos estão em `docs/lgpd-dados-pessoais.md`? Se não estiverem, pare e peça autorização ao usuário.
-- **`routes/api.php` existe?** Na primeira vez, ele não existe. Peça autorização e rode `php artisan install:api`: o comando cria o arquivo, registra as rotas no `bootstrap/app.php` e publica a configuração e a migration do Sanctum, que já é dependência. Depois confira o diff.
 - **O endpoint é público ou privado?** Por padrão ele é privado.
+- **Primeiro uso do banco:** se `src/db.ts`, o middleware `src/middleware/validate.ts` ou o banco de testes ainda não existirem, crie-os nesta tarefa (veja os passos abaixo) e avise o usuário.
 
-## 1. Tabela e model
+## 1. Tabela (`prisma/schema.prisma`)
 
-```bash
-php artisan make:model WaitlistEntry -mf     # model + migration + factory
-php artisan make:enum Enums/WaitlistStatus
-```
+```prisma
+enum WaitlistStatus {
+  pending
+  contacted
+  enrolled
+  discarded
+}
 
-```php
-// migration
-Schema::create('waitlist_entries', function (Blueprint $table) {
-    $table->ulid('id')->primary();
-    $table->string('guardian_name', 120);
-    $table->string('email', 254);
-    $table->string('phone', 20);
-    $table->string('child_name', 120);
-    $table->date('child_birth_date');
-    $table->string('status', 20)->default('pending');
-    $table->timestamp('consented_at');
-    $table->string('privacy_policy_version', 20);
-    $table->timestamps();
-});
-```
+model WaitlistEntry {
+  id                     String         @id @default(ulid())
+  guardian_name          String         @db.VarChar(120)
+  email                  String         @db.VarChar(254)
+  phone                  String         @db.VarChar(20)
+  child_name             String         @db.VarChar(120)
+  child_birth_date       DateTime       @db.Date
+  status                 WaitlistStatus @default(pending)
+  consented_at           DateTime
+  privacy_policy_version String         @db.VarChar(20)
+  created_at             DateTime       @default(now())
+  updated_at             DateTime       @updatedAt
 
-```php
-#[Fillable(['guardian_name', 'email', 'phone', 'child_name', 'child_birth_date', 'consented_at', 'privacy_policy_version'])]
-class WaitlistEntry extends Model
-{
-    use HasFactory, HasUlids;
-
-    protected function casts(): array
-    {
-        return [
-            'child_birth_date' => 'date',
-            'consented_at' => 'datetime',
-            'status' => WaitlistStatus::class,
-        ];
-    }
+  @@map("waitlist_entries")
 }
 ```
 
-`status` não está em `#[Fillable]`: quem define o status é a regra de negócio, nunca o cliente.
+Depois rode `npm run db:migrate -- --name create_waitlist_entries` (cria a migration e a aplica no banco de desenvolvimento) e confira o SQL gerado em `prisma/migrations/`.
 
-## 2. Policy (endpoints privados)
+Na primeira vez, crie `src/db.ts`:
 
-```bash
-php artisan make:policy WaitlistEntryPolicy --model=WaitlistEntry
+```ts
+import { PrismaPg } from "@prisma/adapter-pg"
+
+import { config } from "./config.ts"
+import { PrismaClient } from "./generated/prisma/client.ts"
+
+export const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: config.databaseUrl }) })
 ```
 
-Implemente só os métodos usados e negue por padrão. Exemplo: `viewAny` retorna `$user->role === Role::Admin`.
+## 2. Schema de validação (Zod)
 
-## 3. FormRequest
+`src/schemas/waitlist/storeWaitlistEntry.ts`:
 
-```bash
-php artisan make:request WaitlistEntry/StoreWaitlistEntryRequest
+```ts
+import { z } from "zod"
+
+export const storeWaitlistEntrySchema = z.object({
+  guardian_name: z.string().trim().min(1).max(120),
+  email: z.email().max(254),
+  phone: z.string().trim().min(1).max(20),
+  child_name: z.string().trim().min(1).max(120),
+  child_birth_date: z.iso.date(), // + checagem de data plausível (no passado, até 7 anos)
+  consent: z.literal(true),
+})
+
+export type StoreWaitlistEntryInput = z.infer<typeof storeWaitlistEntrySchema>
 ```
 
-```php
-public function authorize(): bool
-{
-    return true; // rota pública; o rate limit fica na rota
-}
+`status` não está no schema: quem define o status é a regra de negócio, nunca o cliente. Campos fora do schema são descartados pelo Zod.
 
-public function rules(): array
-{
-    return [
-        'guardian_name' => ['required', 'string', 'max:120'],
-        'email' => ['required', 'email', 'max:254'],
-        'phone' => ['required', 'string', 'max:20'],
-        'child_name' => ['required', 'string', 'max:120'],
-        'child_birth_date' => ['required', 'date', 'before:today', 'after:-7 years'],
-        'consent' => ['accepted'],
-    ];
-}
-```
+Em rotas privadas, a Policy é chamada no controller antes da Action (Fase 2).
 
-Em rotas privadas, `authorize()` usa a Policy: `return $this->user()->can('create', WaitlistEntry::class);`.
+## 3. Action (regra de negócio)
 
-## 4. Action (regra de negócio)
+`src/actions/waitlist/createWaitlistEntry.ts`:
 
-`app/Actions/Waitlist/CreateWaitlistEntry.php`:
+```ts
+export async function createWaitlistEntry(input: StoreWaitlistEntryInput): Promise<WaitlistEntry> {
+  const { consent: _consent, ...data } = input
 
-```php
-class CreateWaitlistEntry
-{
-    public function handle(array $data): WaitlistEntry
-    {
-        return WaitlistEntry::create([
-            ...Arr::except($data, ['consent']),
-            'consented_at' => now(),
-            'privacy_policy_version' => config('privacy.policy_version'),
-        ]);
-    }
-}
-```
-
-`config('privacy.policy_version')` é um exemplo: crie a configuração ou adapte antes de usar.
-
-## 5. Resource
-
-```bash
-php artisan make:resource WaitlistEntryResource
-```
-
-Liste os campos explicitamente. Uma resposta pública devolve o mínimo (ex.: `id`, `status`, `created_at`), nunca os dados da criança.
-
-## 6. Controller
-
-```bash
-php artisan make:controller Api/V1/WaitlistEntryController
-```
-
-```php
-public function store(StoreWaitlistEntryRequest $request, CreateWaitlistEntry $createWaitlistEntry): WaitlistEntryResource
-{
-    $entry = $createWaitlistEntry->handle($request->validated());
-
-    return new WaitlistEntryResource($entry);
+  return prisma.waitlistEntry.create({
+    data: {
+      ...data,
+      child_birth_date: new Date(data.child_birth_date),
+      consented_at: new Date(),
+      privacy_policy_version: config.privacyPolicyVersion,
+    },
+  })
 }
 ```
 
-## 7. Rota (`routes/api.php`)
+## 4. Resource
 
-```php
-Route::prefix('v1')->group(function () {
-    // Públicas: sempre com rate limit
-    Route::post('waitlist-entries', [WaitlistEntryController::class, 'store'])->middleware('throttle:5,1');
+`src/resources/waitlistEntryResource.ts`. Liste os campos explicitamente. Uma resposta pública devolve o mínimo, nunca os dados da criança:
 
-    Route::middleware('auth:sanctum')->group(function () {
-        // Privadas
-    });
-});
+```ts
+export function waitlistEntryResource(entry: WaitlistEntry) {
+  return {
+    id: entry.id,
+    status: entry.status,
+    created_at: entry.created_at.toISOString(),
+  }
+}
 ```
 
-## 8. Testes
+## 5. Controller
 
-```bash
-php artisan make:test Api/V1/WaitlistEntry/StoreWaitlistEntryTest
+`src/controllers/v1/waitlistEntryController.ts`:
+
+```ts
+export async function storeWaitlistEntry(request: Request, response: Response): Promise<void> {
+  const entry = await createWaitlistEntry(request.body as StoreWaitlistEntryInput)
+
+  response.status(201).json({ data: waitlistEntryResource(entry) })
+}
 ```
 
-Cubra os casos obrigatórios de `.claude/rules/testes.md` e confira que a resposta não contém os dados da criança.
+O `request.body` aqui já foi trocado pelos dados validados pelo middleware `validate` (passo 6).
 
-## 9. Finalize
+## 6. Rota (`src/routes/v1.ts`)
 
-- [ ] `php artisan test` e `vendor/bin/pint --test` passando
+```ts
+// Públicas: sempre com limite de tentativas
+v1Router.post("/waitlist-entries", publicFormLimit, validate(storeWaitlistEntrySchema), storeWaitlistEntry)
+```
+
+- `publicFormLimit` é um `rateLimit()` do `express-rate-limit` (ex.: 5 por minuto), com a resposta `429` no formato `{ "message": "..." }`.
+- `validate(schema)` roda o `safeParse` do Zod. Se falhar, responde `422` com `{ "message": "...", "errors": { "campo": ["..."] } }` (use `z.flattenError(error).fieldErrors`). Se passar, troca `request.body` pelos dados validados e chama o próximo.
+
+## 7. Testes
+
+`tests/api/v1/waitlistEntries/storeWaitlistEntry.test.ts`, usando `startTestServer()` e `fetch`. Cubra os casos obrigatórios de `.claude/rules/testes.md` e confira que a resposta não contém os dados da criança. Testes que tocam o banco usam o banco `kabana_kids_test` e limpam as tabelas antes de cada teste.
+
+## 8. Finalize
+
+- [ ] `npm run typecheck` e `npm test` passando
 - [ ] Skill `revisao-seguranca` aplicada
 - [ ] Tipos do frontend atualizados, se o endpoint já for consumido (skill `novo-servico`)
 - [ ] `docs/lgpd-dados-pessoais.md` e `docs/arquitetura.md` atualizados, se for o caso
+- [ ] Variáveis de ambiente novas em `.env.example`, `src/config.ts` e `README.md`

@@ -1,7 +1,9 @@
 ---
 paths:
-  - "backend/routes/**"
-  - "backend/app/Http/**"
+  - "backend/src/routes/**"
+  - "backend/src/controllers/**"
+  - "backend/src/schemas/**"
+  - "backend/src/resources/**"
   - "frontend/src/services/**"
   - "frontend/src/types/**"
 ---
@@ -21,7 +23,7 @@ A API é a única ponte entre os clientes (site e futuro app mobile) e os dados.
 ## Formato
 
 - Requisição e resposta em JSON. O cliente envia `Accept: application/json`.
-- Campos em `snake_case` (padrão do Laravel). O frontend usa os mesmos nomes, sem conversão.
+- Campos em `snake_case`, iguais às colunas do banco. O frontend usa os mesmos nomes, sem conversão.
 - Datas em ISO 8601 (`2026-10-30` e `2026-10-30T14:00:00-03:00`).
 - Toda resposta de sucesso sai por um **API Resource** e vem dentro de `data`:
 
@@ -29,12 +31,12 @@ A API é a única ponte entre os clientes (site e futuro app mobile) e os dados.
 { "data": { "id": "01J...", "status": "pending", "created_at": "2026-10-30T14:00:00-03:00" } }
 ```
 
-- Listas são sempre paginadas (`->paginate()`, com no máximo 50 itens por página) e trazem `data`, `links` e `meta`.
-- O Resource expõe só os campos que o cliente precisa. Nunca retorne um model diretamente.
+- Listas são sempre paginadas (no máximo 50 itens por página, com `take`/`skip` do Prisma) e trazem `data` e `meta` (`page`, `per_page`, `total`).
+- O Resource expõe só os campos que o cliente precisa. Nunca retorne o objeto vindo do Prisma diretamente.
 
 ## Erros
 
-Use o formato padrão do Laravel; o cliente se baseia no status HTTP.
+Todo erro sai neste formato (montado pelo middleware de validação e pelo `errorHandler`); o cliente se baseia no status HTTP.
 
 | Status | Quando | Corpo |
 |---|---|---|
@@ -47,8 +49,8 @@ Use o formato padrão do Laravel; o cliente se baseia no status HTTP.
 
 ## Autenticação
 
-- Rotas privadas usam o middleware `auth:sanctum`, que aceita os dois modos: o site autentica por cookie de sessão + CSRF e o app mobile por token `Bearer`. Detalhes em `seguranca.md`.
-- Rotas públicas ficam agrupadas e identificadas em `routes/api.php`, sempre com `throttle`.
+- Rotas privadas passam por um middleware de login que aceita os dois modos: o site autentica por cookie de sessão + CSRF e o app mobile por token `Bearer`. A ferramenta será escolhida na Fase 2 (D18). Detalhes em `seguranca.md`.
+- Rotas públicas ficam agrupadas e identificadas em `backend/src/routes/v1.ts`, sempre com limite de tentativas (`express-rate-limit`).
 
 ## Compatibilidade entre clientes
 
