@@ -1,8 +1,69 @@
 @import "tailwindcss";
 
-* {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
+@theme {
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Baloo 2", "Nunito", ui-sans-serif, system-ui, sans-serif;
+
+  /* Azul claro */
+  --color-ceu-50: #f2f8ff;
+  --color-ceu-100: #e2effd;
+  --color-ceu-200: #c6e2fb;
+  --color-ceu-300: #9ccdf7;
+  --color-ceu-400: #6fb4ee;
+  --color-ceu-500: #4a97dd;
+  --color-ceu-600: #3579bc;
+  --color-ceu-700: #2a5f94;
+
+  /* Lilás */
+  --color-lilas-50: #f8f5ff;
+  --color-lilas-100: #efe9fe;
+  --color-lilas-200: #ded2fc;
+  --color-lilas-300: #c6b2f6;
+  --color-lilas-400: #ab90ea;
+  --color-lilas-500: #9070d6;
+  --color-lilas-600: #7455b4;
+  --color-lilas-700: #5b428d;
+
+  /* Texto: cinza azulado, nunca preto puro */
+  --color-tinta: #2f3547;
+  --color-tinta-suave: #626c82;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #ffffff;
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Seções com âncora não podem ficar atrás do menu fixo */
+section[id] {
+  scroll-margin-top: 5.5rem;
+}
+
+@keyframes flutuar {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+.animar-flutuar {
+  animation: flutuar 7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animar-flutuar {
+    animation: none;
+  }
+}
