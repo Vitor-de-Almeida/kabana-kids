@@ -110,7 +110,7 @@ export function WaitlistForm() {
             id="mensagem"
             name="mensagem"
             rows={3}
-            placeholder="Rotina da família, cuidados especiais, horário desejado..."
+            placeholder="Rotina da família, horário desejado, etc."
             className={campo}
           />
         </div>
