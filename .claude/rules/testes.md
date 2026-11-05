@@ -24,7 +24,7 @@ Teste o comportamento que importa para o usuário e para a segurança, não deta
 - Organize cada teste em três blocos, separados por linha em branco: preparar, agir e verificar.
 - Cada arquivo começa com um comentário dizendo o que testa, e cada teste tem um comentário curto acima dizendo o que verifica, em português (regra de comentários curtos do `CLAUDE.md`).
 - Dados de teste sempre fictícios (ex.: `ana@example.com`, telefone `(11) 90000-0000`). Nunca use nomes, e-mails ou telefones reais.
-- Verifique também o que **não** pode vazar: campos ocultos ausentes no JSON (`expect(body.data).not.toHaveProperty("child_name")`).
+- Verifique também o que **não** pode vazar: campos ocultos ausentes no JSON (`expect(body.data).not.toHaveProperty("childName")`).
 - **Banco de testes:** os testes que tocam o banco usam um PostgreSQL separado (`kabana_kids_test`), nunca o banco de desenvolvimento, e limpam as tabelas antes de cada teste. A configuração é criada junto com o primeiro endpoint que usa o banco.
 - Comandos: `npm test` (tudo) e `npx vitest run tests/caminho/arquivo.test.ts` (um arquivo). Mais `npm run typecheck` para conferir os tipos.
 
