@@ -81,9 +81,11 @@ O site e o app usam **formas diferentes de provar quem são** (veja a Etapa 2.4)
 
 | Perfil | O que faz |
 |---|---|
-| `parent` (responsável) | Vê os próprios filhos, acompanha a matrícula, lê comunicados |
+| `parent` (responsável) | No portal da família: vê os próprios filhos, paga mensalidades, vê as fotos tiradas pela escola e lê as notícias de eventos |
 | `teacher` (professor) | Vê as próprias turmas, registra presença |
-| `admin` (escola) | Gerencia alunos, matrículas, turmas e pagamentos, com registro de auditoria |
+| `admin` (escola) | No painel de gerenciamento: vê os cadastros do formulário de matrícula, efetiva matrículas, cria contas das famílias e gerencia alunos, turmas e pagamentos, com registro de auditoria |
+
+**Como cada um chega lá (D20):** o botão **Entrar** do site leva ao login. A escola cai no painel de gerenciamento; a família, no portal da família. Não existe cadastro aberto: a conta da família só nasce depois que a escola efetiva a matrícula (veja 2.9).
 
 ### Fases de entrega
 
@@ -126,11 +128,13 @@ kabanaKids/
 
 **Objetivo:** uma família visita o site, gosta da escola e deixa os dados para ser chamada quando houver vaga.
 
+*Nome na tela:* no site, essa parte se chama **Matrícula** (item do menu e seção do formulário). O formulário é uma manifestação de interesse: a matrícula de verdade é efetivada depois, pela escola, no painel (D20). Por dentro, a tabela continua `waitlist_entries`.
+
 **1.2** ✅ **Preparar a API** (esqueleto em Node, decisão D18).
 *O que foi feito:* a cozinha foi montada com Express. Ela já tem o cardápio vazio (`src/routes/v1.ts`), os cabeçalhos de segurança (`helmet`), a lista de convidados (`cors`), o tratamento de erros que nunca mostra detalhes internos e o endereço `GET /up`, que só responde "estou viva".
-*O que ficou para depois:* os crachás (login) chegam na Fase 2, com uma ferramenta a escolher.
+*O que ficou para depois:* os crachás (login) chegam na Fase 2, feitos à mão (D21).
 
-**1.3** ⬜ **Tabela e endpoint da lista de espera** (skill `novo-endpoint`).
+**1.3** 🔄 **Tabela e endpoint da lista de espera** (skill `novo-endpoint`). Código pronto, com turma de interesse, mensagem e logs (D23); falta rodar os testes no banco `kabana_kids_test`.
 
 | Tabela | O que guarda |
 |---|---|
@@ -148,7 +152,8 @@ kabanaKids/
 
 **1.6** ⬜ Resolver as **pendências da LGPD** listadas no fim de `docs/lgpd-dados-pessoais.md` (prazos de guarda dos dados, canal para pedidos das famílias, encarregado de dados).
 
-**1.7** ❓ **Como a escola vai ver os cadastros na Fase 1?** O painel da escola só chega na Fase 2. Veja as opções em "Decisões pendentes".
+**1.7** ⬜ **Login e painel da escola antecipados** (D22). A escola vê os cadastros do formulário pelo painel, com login, já na Fase 1. Isso traz para cá o login da Fase 2 (passos 2.1 a 2.6) e o **layout compartilhado** do painel: menu lateral à esquerda e conteúdo à direita, usado pela escola agora e pela família depois, cada um com os seus itens no menu.
+*Por quê:* não mandar dados de crianças por e-mail nem depender do terminal para a escola trabalhar.
 
 **1.8** ⬜ **Deploy da Fase 1** (Parte 4).
 
@@ -168,7 +173,7 @@ kabanaKids/
 > Todo campo com dado pessoal entra **antes** no inventário `docs/lgpd-dados-pessoais.md`.
 
 **2.1** **Senhas embaralhadas (hash).**
-*O que é:* a senha nunca é guardada como foi digitada. Ela passa por uma "máquina de moer" que só funciona num sentido: dá para conferir se uma senha está certa, mas não dá para descobrir a senha olhando a ficha. Usaremos um algoritmo próprio para senhas (Argon2id ou bcrypt), escolhido na Fase 2.
+*O que é:* a senha nunca é guardada como foi digitada. Ela passa por uma "máquina de moer" que só funciona num sentido: dá para conferir se uma senha está certa, mas não dá para descobrir a senha olhando a ficha. Usaremos o **Argon2id**, um algoritmo feito para senhas que o próprio Node já traz, sem pacote extra (D21).
 
 **2.2** **Perfis (`role`).** O perfil de cada pessoa vem **do banco**, nunca do pedido que o navegador envia.
 *Por quê:* se o navegador pudesse dizer "eu sou admin", qualquer um diria.
@@ -181,13 +186,19 @@ kabanaKids/
 - *Correção em relação à versão antiga deste roteiro:* ela previa tokens também no site. Token guardado no navegador pode ser roubado por código malicioso, por isso a decisão D03 em `docs/decisoes.md`.
 
 **2.5** **Proteções do login:** no máximo 5 tentativas por minuto; mensagem de erro sempre igual ("E-mail ou senha inválidos"), para não revelar quais e-mails existem; logout que realmente encerra a sessão.
-- ⚠️ **Não esquecer:** trocar o identificador da sessão logo após o login (o comando depende da ferramenta de login escolhida nesta fase) e também quando o perfil de alguém mudar. Assim, um número de sessão roubado antes do login não serve para nada. O logout invalida a sessão. Cada um desses passos precisa de teste (D17).
+- ⚠️ **Não esquecer:** trocar o identificador da sessão logo após o login (apagar a sessão antiga e criar uma nova, com outro token) e também quando o perfil de alguém mudar. Assim, um número de sessão roubado antes do login não serve para nada. O logout invalida a sessão. Cada um desses passos precisa de teste (D17).
 
-**2.6** **Telas:** login que leva cada perfil ao seu lugar, portal das famílias (meus filhos, comunicados), painel da escola (interessados, alunos, comunicados) e painel do professor (minhas turmas).
+**2.6** **Telas:** login que leva cada perfil ao seu lugar, portal da família (meus filhos, notícias de eventos; mensalidades e fotos chegam na Fase 4), painel de gerenciamento da escola (cadastros do formulário de matrícula, alunos, comunicados, contas das famílias) e painel do professor (minhas turmas). A tela de login já existe só no visual (`frontend/src/pages/auth/Login.tsx`).
 
 **2.7** **Auditoria:** toda vez que um `admin` vê em lote, exporta, altera ou apaga dados de crianças, o sistema anota quem fez, o quê e quando, como o livro de registro de uma portaria.
 
 **2.8** Recomendado: **verificação em duas etapas (2FA)** para `admin`: além da senha, um código no celular.
+
+**2.9** **Criação da conta da família** (D20). Só acontece **depois** de a escola efetivar a matrícula, por um de dois caminhos:
+- **(a) A escola cria a conta** no painel de gerenciamento.
+- **(b) A escola gera um código** e entrega à família, que cria a própria conta com ele.
+*Por quê:* sem cadastro aberto, um estranho não consegue criar uma conta e "se ligar" a uma criança.
+⚠️ **O código é uma chave:** precisa ser aleatório e longo, de **uso único**, ter **prazo de validade**, estar ligado a uma matrícula, ser guardado como **hash** (como a senha) e ter **rate limit** na tela onde é usado. Assim, um código vazado ou adivinhado não abre a ficha de ninguém.
 
 ---
 
@@ -218,7 +229,11 @@ kabanaKids/
 
 **4.1** *Correção de nome:* a versão antiga usava a tabela `classes`. `class` é uma **palavra reservada** (a própria linguagem a usa) em PHP e também em JavaScript/TypeScript, e um nome assim só causa confusão no código. Por isso, `classrooms`.
 
-**4.2** **Pagamentos** só depois de o login estar sólido, e sempre por um intermediário certificado (Mercado Pago ou Stripe). **Nunca** guardamos número de cartão: quem cuida disso é o intermediário, como a maquininha do restaurante.
+**4.2** **Pagamentos** só depois de o login estar sólido, e sempre por um intermediário certificado (Mercado Pago ou Stripe). **Nunca** guardamos número de cartão: quem cuida disso é o intermediário, como a maquininha do restaurante. A família paga as **mensalidades** pelo portal da família (D20).
+
+**4.3** ❓ **Fotos tiradas pela escola** no portal da família (D20). Foto de criança é dado pessoal, e a LGPD exige **consentimento específico** do responsável (artigo 14).
+- As fotos ficam num cofre, como os documentos (3.1), e só são vistas por quem tem permissão.
+- Antes de implementar: entrar no inventário `docs/lgpd-dados-pessoais.md` e decidir o que fazer com **fotos em que aparecem várias crianças**. Uma família não pode ver o filho de outra sem a autorização dela.
 
 ---
 
@@ -265,9 +280,9 @@ Junto com isso, configure o **CORS** e o login para aceitarem pedidos **só** do
 Estas perguntas precisam da sua resposta antes da etapa correspondente. Elas também estão registradas em `docs/decisoes.md`.
 
 1. **Quantos responsáveis por criança?** (antes da Fase 2) A versão antiga previa um responsável por criança (`user_id` em `students`). Na prática, mãe e pai costumam querer acesso. A proposta é a tabela `guardian_student`, que permite vários (D12).
-2. **Como a escola vê a lista de espera na Fase 1?** (antes do deploy da Fase 1) Opções: (a) antecipar uma tela simples de admin, com login; (b) esperar a Fase 2 e, até lá, consultar pelo terminal. Mandar os dados por e-mail **não é recomendado**: o e-mail espalha dados de crianças por caixas de entrada fora do nosso controle (D13).
-3. **Onde ficam os servidores?** (antes do deploy) Railway e Render não oferecem servidores no Brasil (confirme na contratação), então os dados ficariam no exterior. A LGPD permite, mas com condições (transferência internacional, artigo 33). Vale confirmar com quem cuida da parte jurídica da escola ou escolher uma hospedagem com servidores no Brasil (D14).
-4. **Dados de saúde na matrícula** (antes da Fase 3): veja 3.2.
+2. **Onde ficam os servidores?** (antes do deploy) Railway e Render não oferecem servidores no Brasil (confirme na contratação), então os dados ficariam no exterior. A LGPD permite, mas com condições (transferência internacional, artigo 33). Vale confirmar com quem cuida da parte jurídica da escola ou escolher uma hospedagem com servidores no Brasil (D14).
+3. **Dados de saúde na matrícula** (antes da Fase 3): veja 3.2.
+4. **Fotos com várias crianças** (antes da Fase 4): veja 4.3.
 
 ---
 
