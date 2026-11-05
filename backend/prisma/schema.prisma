@@ -9,3 +9,36 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// Fase 1: formulário "Matrícula" do site (D20)
+enum WaitlistStatus {
+  pending
+  contacted
+  enrolled
+  discarded
+}
+
+enum DesiredClassroom {
+  nursery
+  toddler
+  preschool
+  undecided
+}
+
+model WaitlistEntry {
+  id                   String           @id @default(ulid())
+  guardianName         String           @map("guardian_name") @db.VarChar(120)
+  email                String           @db.VarChar(254)
+  phone                String           @db.VarChar(20)
+  childName            String           @map("child_name") @db.VarChar(120)
+  childBirthDate       DateTime         @map("child_birth_date") @db.Date
+  desiredClassroom     DesiredClassroom @map("desired_classroom")
+  message              String?          @db.VarChar(1000)
+  status               WaitlistStatus   @default(pending)
+  consentedAt          DateTime         @map("consented_at")
+  privacyPolicyVersion String           @map("privacy_policy_version") @db.VarChar(20)
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+
+  @@map("waitlist_entries")
+}

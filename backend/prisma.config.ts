@@ -14,5 +14,7 @@ export default defineConfig({
   },
   datasource: {
     url: process.env.DATABASE_URL ?? "",
+    // Banco temporário do migrate dev (usuário sem CREATEDB)
+    shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL,
   },
 })

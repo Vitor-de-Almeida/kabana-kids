@@ -11,4 +11,7 @@ export const config = {
   env: process.env.NODE_ENV ?? "development",
   port: Number(process.env.PORT ?? 8000),
   frontendUrl: required("FRONTEND_URL"),
+  databaseUrl: required("DATABASE_URL"),
+  // Troque ao publicar uma nova Política de Privacidade (1.5)
+  privacyPolicyVersion: "rascunho",
 }
