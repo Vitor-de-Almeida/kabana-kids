@@ -25,20 +25,118 @@ enum DesiredClassroom {
   undecided
 }
 
+// Campos pessoais ficam NULL após a anonimização (D29)
 model WaitlistEntry {
-  id                   String           @id @default(ulid())
-  guardianName         String           @map("guardian_name") @db.VarChar(120)
-  email                String           @db.VarChar(254)
-  phone                String           @db.VarChar(20)
-  childName            String           @map("child_name") @db.VarChar(120)
-  childBirthDate       DateTime         @map("child_birth_date") @db.Date
-  desiredClassroom     DesiredClassroom @map("desired_classroom")
-  message              String?          @db.VarChar(1000)
-  status               WaitlistStatus   @default(pending)
-  consentedAt          DateTime         @map("consented_at")
-  privacyPolicyVersion String           @map("privacy_policy_version") @db.VarChar(20)
-  createdAt            DateTime         @default(now()) @map("created_at")
-  updatedAt            DateTime         @updatedAt @map("updated_at")
+  id                   String            @id @default(ulid())
+  guardianName         String?           @map("guardian_name") @db.VarChar(120)
+  email                String?           @db.VarChar(254)
+  phone                String?           @db.VarChar(20)
+  childName            String?           @map("child_name") @db.VarChar(120)
+  childBirthDate       DateTime?         @map("child_birth_date") @db.Date
+  desiredClassroom     DesiredClassroom? @map("desired_classroom")
+  message              String?           @db.VarChar(1000)
+  status               WaitlistStatus    @default(pending)
+  consentedAt          DateTime          @map("consented_at")
+  privacyPolicyVersion String            @map("privacy_policy_version") @db.VarChar(20)
+  anonymizedAt         DateTime?         @map("anonymized_at")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
 
+  @@index([createdAt])
   @@map("waitlist_entries")
+}
+
+// Fase 1, passo 1.7: login da escola (D21)
+// admin = dono da escola, um só (D40)
+enum UserRole {
+  admin
+  manager
+  teacher
+  parent
+}
+
+model User {
+  id                         String       @id @default(ulid())
+  name                       String       @db.VarChar(120)
+  email                      String       @unique @db.VarChar(254)
+  passwordHash               String       @map("password_hash") @db.VarChar(255)
+  role                       UserRole
+  // Dono: true ou NULL; o @unique impede dois donos (D40)
+  isOwner                    Boolean?     @unique @map("is_owner")
+  // Senha temporária: vale 24 h, uma vez só (D41)
+  mustChangePassword         Boolean      @default(false) @map("must_change_password")
+  temporaryPasswordExpiresAt DateTime?    @map("temporary_password_expires_at")
+  temporaryPasswordUsedAt    DateTime?    @map("temporary_password_used_at")
+  // Conta os logins: 2FA obrigatório depois do 3º (D42)
+  loginCount                 Int          @default(0) @map("login_count")
+  // 2FA (D33): segredo criptografado; ativo quando enabledAt existe
+  twoFactorSecret            String?      @map("two_factor_secret") @db.VarChar(255)
+  twoFactorEnabledAt         DateTime?    @map("two_factor_enabled_at")
+  // Impede reusar o mesmo código de 6 dígitos
+  twoFactorLastStep          Int?         @map("two_factor_last_step")
+  createdAt                  DateTime     @default(now()) @map("created_at")
+  updatedAt                  DateTime     @updatedAt @map("updated_at")
+  sessions                   Session[]
+  auditLogs                  AuditLog[]
+  loginEvents                LoginEvent[]
+
+  @@map("users")
+}
+
+// O token fica só no cookie; aqui, apenas o hash
+model Session {
+  id         String   @id @default(ulid())
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String   @unique @map("token_hash") @db.Char(64)
+  expiresAt  DateTime @map("expires_at")
+  lastUsedAt DateTime @map("last_used_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// Só IDs: nunca copia os dados pessoais do alvo.
+// Ninguém altera; só apaga depois de 10 anos (D44).
+model AuditLog {
+  id         String   @id @default(ulid())
+  // Vazio quando a ação veio do terminal
+  userId     String?  @map("user_id")
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  // Usuário do servidor, quando veio do terminal
+  operator   String?  @db.VarChar(100)
+  origin     String   @default("panel") @db.VarChar(20)
+  result     String   @default("success") @db.VarChar(20)
+  action     String   @db.VarChar(60)
+  targetType String   @map("target_type") @db.VarChar(60)
+  targetId   String?  @map("target_id") @db.VarChar(26)
+  requestId  String?  @map("request_id") @db.VarChar(36)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// Um registro por login certo: IP e navegador (D43)
+model LoginEvent {
+  id        String   @id @default(ulid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  ip        String   @db.VarChar(45)
+  userAgent String   @map("user_agent") @db.VarChar(512)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("login_events")
+}
+
+// Limite de tentativas no banco (D34): só o hash da chave
+model RateLimitHit {
+  keyHash String   @id @map("key_hash") @db.Char(64)
+  hits    Int
+  resetAt DateTime @map("reset_at")
+
+  @@index([resetAt])
+  @@map("rate_limit_hits")
 }
