@@ -13,6 +13,8 @@ export default defineConfig({
       NODE_ENV: "test",
       FRONTEND_URL: "http://localhost:5173",
       DATABASE_URL: process.env.TEST_DATABASE_URL ?? "",
+      // Chave fictícia, só para testes
+      TWO_FACTOR_ENCRYPTION_KEY: "dGVzdGUtdGVzdGUtdGVzdGUtdGVzdGUtdGVzdGUtMTI=",
     },
     globalSetup: "tests/globalSetup.ts",
     // Um arquivo por vez: todos usam o mesmo banco

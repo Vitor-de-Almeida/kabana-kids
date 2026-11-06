@@ -1,19 +1,93 @@
-import { rateLimit } from "express-rate-limit"
+import type { Request, Response } from "express"
+import { ipKeyGenerator, rateLimit } from "express-rate-limit"
+import type { AugmentedRequest } from "express-rate-limit"
 
 import { logger } from "../logger.ts"
+import { databaseRateLimitStore } from "./rateLimitStore.ts"
+import { getCurrentUser } from "./requireAuth.ts"
 import { getRequestId } from "./requestContext.ts"
 
-// Formulários públicos: 5 envios por minuto por IP.
-// Função, e não constante: cada app tem o seu contador.
-export function publicFormLimit() {
+const ONE_MINUTE_MS = 60_000
+const WAIT_MESSAGE = "Aguarde um minuto e tente de novo."
+
+type LimitOptions = {
+  // Nome do contador no banco; cada limite tem o seu
+  name: string
+  limit: number
+  message: string
+  key?: (request: Request, response: Response) => string
+  // Login (D36): a espera dobra a cada tentativa bloqueada
+  escalate?: boolean
+}
+
+// "Aguarde 1 minuto" ou "Aguarde 8 minutos", conforme a penalidade
+function loginWaitMessage(request: Request): string {
+  const resetTime = (request as AugmentedRequest).rateLimit?.resetTime
+  // Arredonda: relógios do banco e da API diferem por milissegundos
+  const minutes = resetTime ? Math.max(1, Math.round((resetTime.getTime() - Date.now()) / ONE_MINUTE_MS)) : 1
+  const wait = minutes >= 60 ? `${Math.ceil(minutes / 60)} hora(s)` : `${minutes} minuto(s)`
+  return `Muitas tentativas de login. Aguarde ${wait} e tente de novo. Cada nova tentativa antes disso aumenta a espera.`
+}
+
+function limitPerMinute({ name, limit, message, key, escalate = false }: LimitOptions) {
   return rateLimit({
-    windowMs: 60_000,
-    limit: 5,
+    windowMs: ONE_MINUTE_MS,
+    limit,
     standardHeaders: "draft-8",
     legacyHeaders: false,
+    store: databaseRateLimitStore(name, { escalate }),
+    ...(key ? { keyGenerator: key } : {}),
     handler: (request, response) => {
-      logger.info("rate_limit.blocked", { request_id: getRequestId(response), path: request.path })
-      response.status(429).json({ message: "Muitas tentativas de cadastro. Aguarde um minuto e tente de novo." })
+      logger.info("rate_limit.blocked", { request_id: getRequestId(response), path: request.path, limit: name })
+      response.status(429).json({ message: escalate ? loginWaitMessage(request) : message })
     },
+  })
+}
+
+function loginEmail(request: Request): string {
+  const email: unknown = request.body?.email
+  return typeof email === "string" ? email.trim().toLowerCase().slice(0, 254) : ""
+}
+
+const ipKey = (request: Request) => ipKeyGenerator(request.ip ?? "")
+
+// Formulários públicos: 5 envios por minuto por IP
+export function publicFormLimit() {
+  return limitPerMinute({ name: "public-form", limit: 5, message: `Muitas tentativas de cadastro. ${WAIT_MESSAGE}` })
+}
+
+// Login: 5 tentativas por minuto por e-mail + IP (seguranca.md)
+export function loginLimit() {
+  return limitPerMinute({
+    name: "login",
+    limit: 5,
+    message: `Muitas tentativas de login. ${WAIT_MESSAGE}`,
+    key: (request) => `${ipKey(request)}:${loginEmail(request)}`,
+    escalate: true,
+  })
+}
+
+// Um IP testando vários e-mails também é barrado
+export function loginIpLimit() {
+  return limitPerMinute({ name: "login-ip", limit: 10, message: `Muitas tentativas de login. ${WAIT_MESSAGE}`, escalate: true })
+}
+
+// Troca de senha e 2FA: 5 por minuto por conta (depois do login)
+export function accountLimit() {
+  return limitPerMinute({
+    name: "account",
+    limit: 5,
+    message: `Muitas tentativas. ${WAIT_MESSAGE}`,
+    key: (_request, response) => getCurrentUser(response).id,
+  })
+}
+
+// Aba Equipe (criar contas e redefinir senhas): 20 por minuto por conta
+export function teamLimit() {
+  return limitPerMinute({
+    name: "team",
+    limit: 20,
+    message: `Muitas alterações seguidas na equipe. ${WAIT_MESSAGE}`,
+    key: (_request, response) => getCurrentUser(response).id,
   })
 }

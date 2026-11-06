@@ -2,7 +2,7 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { prisma } from "../../../../src/db.ts"
-import { startTestServer } from "../../../helpers.ts"
+import { FRONTEND_ORIGIN, cleanDatabase, startTestServer } from "../../../helpers.ts"
 
 type ApiBody = {
   data: Record<string, string>
@@ -40,7 +40,7 @@ describe("POST /api/v1/waitlist-entries", () => {
   // API nova (contador de tentativas zerado) e tabela limpa
   beforeEach(async () => {
     server = await startTestServer()
-    await prisma.waitlistEntry.deleteMany()
+    await cleanDatabase()
   })
 
   afterEach(async () => {
@@ -55,7 +55,7 @@ describe("POST /api/v1/waitlist-entries", () => {
   function post(body: unknown): Promise<Response> {
     return fetch(`${server.url}/api/v1/waitlist-entries`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: { "Content-Type": "application/json", Accept: "application/json", Origin: FRONTEND_ORIGIN },
       body: JSON.stringify(body),
     })
   }
@@ -204,7 +204,11 @@ describe("POST /api/v1/waitlist-entries", () => {
     const postFromFakeIp = (attempt: number) =>
       fetch(`${server.url}/api/v1/waitlist-entries`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Forwarded-For": `203.0.113.${attempt}` },
+        headers: {
+          "Content-Type": "application/json",
+          Origin: FRONTEND_ORIGIN,
+          "X-Forwarded-For": `203.0.113.${attempt}`,
+        },
         body: JSON.stringify(validEntry()),
       })
 
@@ -214,6 +218,18 @@ describe("POST /api/v1/waitlist-entries", () => {
     const blocked = await postFromFakeIp(6)
 
     expect(blocked.status).toBe(429)
+  })
+
+  // CSRF: pedido vindo de outro site é recusado
+  it("rejects a submission from another site", async () => {
+    const response = await fetch(`${server.url}/api/v1/waitlist-entries`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "https://evil.example" },
+      body: JSON.stringify(validEntry()),
+    })
+
+    expect(response.status).toBe(403)
+    expect(await prisma.waitlistEntry.count()).toBe(0)
   })
 
   // Rastreabilidade: log com IDs e sem dados pessoais
