@@ -12,7 +12,7 @@ Esta é a regra de maior prioridade do projeto. O sistema guarda dados de crian�
 
 ## Autenticação
 
-A ferramenta de login será escolhida na Fase 2 (D18) e precisa cumprir todas as regras abaixo.
+O login é feito à mão, sem biblioteca de autenticação (D21), e precisa cumprir todas as regras abaixo.
 
 - **Web:** cookie de sessão `HttpOnly` + `Secure` + `SameSite=Lax`, com proteção CSRF.
 - **Mobile:** token de API, guardado no armazenamento seguro do sistema (Keychain no iOS, Keystore no Android).
@@ -70,6 +70,17 @@ A ferramenta de login será escolhida na Fase 2 (D18) e precisa cumprir todas as
 - **Retenção:** todo dado tem prazo definido no inventário. Dados vencidos são excluídos ou anonimizados.
 - **Imagens de crianças reais** só com autorização escrita do responsável. O site público usa imagens de banco ou sem identificação.
 - **Dados de teste, seeders e exemplos** são sempre fictícios. Nunca use dados reais.
+
+## Rastreabilidade e logs
+
+Princípio do projeto (D23): **todo dado e toda ação importante precisam ser rastreáveis.** Deve ser possível responder "o que aconteceu, quando, em qual requisição e com qual registro", sem expor dados pessoais.
+
+- **Toda requisição tem um ID** (`request_id`), devolvido no cabeçalho `X-Request-Id` e presente em todos os logs dela. É ele que liga uma reclamação ("deu erro às 14h") ao que aconteceu no servidor.
+- **Logs estruturados em JSON**, um evento por linha, pelo `src/logger.ts`. Nunca `console.log` solto.
+- **Toda criação, alteração ou exclusão de dado pessoal gera um evento de log** com nome padronizado (`waitlist_entry.created`), o `request_id` e o ID do registro.
+- **Logs levam só IDs**, nunca nome, e-mail, telefone, data de nascimento, mensagem livre, senha, token ou o corpo da requisição.
+- **Registros guardam a própria história:** `created_at`, `updated_at` e, quando houver consentimento, a data e a versão da política aceita.
+- **Ações de `admin` sobre dados de crianças** vão também para a tabela de auditoria (ver "Autorização"), que não se apaga junto com os logs do servidor.
 
 ## Segredos e dependências
 

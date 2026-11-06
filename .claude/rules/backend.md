@@ -55,12 +55,19 @@ Rota → Middleware de validação (schema Zod) → Controller → Action (regra
   - imports relativos levam a extensão `.ts` (`import { config } from "./config.ts"`);
   - use só TypeScript "apagável": sem `enum` do TypeScript, sem `namespace` e sem parâmetros de construtor com modificadores. Para valores fixos, use `as const` ou o `enum` do Prisma. O `tsc` acusa o que não for permitido (`erasableSyntaxOnly`).
 - Use `import type` para importar só tipos.
-- Nomes: arquivos e funções em `camelCase` (`createWaitlistEntry.ts`); tipos em `PascalCase`.
-- **Banco e API em `snake_case`:** tabelas no plural (`waitlist_entries`), colunas e campos do JSON em `snake_case` (`guardian_name`). No `schema.prisma`, o model fica no singular em `PascalCase` com `@@map` para a tabela (`model WaitlistEntry { ... @@map("waitlist_entries") }`) e os campos já em `snake_case`, para não haver conversão escondida entre banco, código e API.
+- **Nomes (padrão no `CLAUDE.md`, D24):** o banco fica em `snake_case` e o código em `camelCase`. No `schema.prisma`, o model fica no singular em `PascalCase` com `@@map` para a tabela no plural, e cada campo em `camelCase` com `@map` para a coluna:
+  ```prisma
+  model WaitlistEntry {
+    guardianName String @map("guardian_name") @db.VarChar(120)
+    @@map("waitlist_entries")
+  }
+  ```
+  A tradução acontece só aqui, no `schema.prisma`. Schema Zod, Action, Resource e testes já usam `camelCase`.
+- **Logs** são uma exceção: mantêm `snake_case` (`request_id`, `waitlist_entry.created`), como na D23.
 - Tabelas com dados pessoais de crianças ou responsáveis usam ULID como chave primária: `id String @id @default(ulid())`. Ver D06.
 - Relacionamentos com uma regra explícita de exclusão (`onDelete: Cascade` ou `onDelete: Restrict`).
 - Migrations são pequenas e criadas por fase com `npm run db:migrate`. Nunca edite uma migration que já rodou em produção: crie outra.
-- Configuração vem de `config.ts`. `process.env` só aparece nele (e no `prisma.config.ts`).
+- Configuração vem de `config.ts`. `process.env` só aparece nele e nos arquivos de ferramenta (`prisma.config.ts`, `vitest.config.ts` e `tests/globalSetup.ts`).
 - Tipos declarados nos parâmetros e retornos das funções exportadas.
 - Ainda **não há formatador nem linter** no backend (precisam de autorização). Siga a formatação dos arquivos vizinhos: aspas duplas, sem ponto e vírgula, 2 espaços.
 

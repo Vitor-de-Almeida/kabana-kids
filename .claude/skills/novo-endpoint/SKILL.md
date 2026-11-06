@@ -26,17 +26,17 @@ enum WaitlistStatus {
 }
 
 model WaitlistEntry {
-  id                     String         @id @default(ulid())
-  guardian_name          String         @db.VarChar(120)
-  email                  String         @db.VarChar(254)
-  phone                  String         @db.VarChar(20)
-  child_name             String         @db.VarChar(120)
-  child_birth_date       DateTime       @db.Date
-  status                 WaitlistStatus @default(pending)
-  consented_at           DateTime
-  privacy_policy_version String         @db.VarChar(20)
-  created_at             DateTime       @default(now())
-  updated_at             DateTime       @updatedAt
+  id                   String         @id @default(ulid())
+  guardianName         String         @map("guardian_name") @db.VarChar(120)
+  email                String         @db.VarChar(254)
+  phone                String         @db.VarChar(20)
+  childName            String         @map("child_name") @db.VarChar(120)
+  childBirthDate       DateTime       @map("child_birth_date") @db.Date
+  status               WaitlistStatus @default(pending)
+  consentedAt          DateTime       @map("consented_at")
+  privacyPolicyVersion String         @map("privacy_policy_version") @db.VarChar(20)
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
 
   @@map("waitlist_entries")
 }
@@ -63,11 +63,11 @@ export const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionStrin
 import { z } from "zod"
 
 export const storeWaitlistEntrySchema = z.object({
-  guardian_name: z.string().trim().min(1).max(120),
+  guardianName: z.string().trim().min(1).max(120),
   email: z.email().max(254),
   phone: z.string().trim().min(1).max(20),
-  child_name: z.string().trim().min(1).max(120),
-  child_birth_date: z.iso.date(), // + checagem de data plausível (no passado, até 7 anos)
+  childName: z.string().trim().min(1).max(120),
+  childBirthDate: z.iso.date(), // + checagem de data plausível (no passado, até 7 anos)
   consent: z.literal(true),
 })
 
@@ -89,9 +89,9 @@ export async function createWaitlistEntry(input: StoreWaitlistEntryInput): Promi
   return prisma.waitlistEntry.create({
     data: {
       ...data,
-      child_birth_date: new Date(data.child_birth_date),
-      consented_at: new Date(),
-      privacy_policy_version: config.privacyPolicyVersion,
+      childBirthDate: new Date(data.childBirthDate),
+      consentedAt: new Date(),
+      privacyPolicyVersion: config.privacyPolicyVersion,
     },
   })
 }
@@ -106,7 +106,7 @@ export function waitlistEntryResource(entry: WaitlistEntry) {
   return {
     id: entry.id,
     status: entry.status,
-    created_at: entry.created_at.toISOString(),
+    createdAt: entry.createdAt.toISOString(),
   }
 }
 ```

@@ -29,8 +29,8 @@ Para mudar uma regra, edite o arquivo onde ela mora (nunca crie uma cópia em ou
 
 Atualize esta seção ao concluir cada fase.
 
-- **Fase 1 em andamento.** A landing page está pronta; o formulário de lista de espera ainda não envia dados.
-- **Backend:** trocado de Laravel para Node.js 26 + TypeScript + Express 5 + Prisma + Zod (D18). Existe só o esqueleto (segurança, CORS, tratamento de erros e `GET /up`); ainda não há rotas em `/api/v1` nem tabelas da escola. Login ainda não escolhido (Fase 2).
+- **Fase 1 em andamento.** A landing page está pronta e o formulário (na tela, "Matrícula"; por dentro, lista de espera) envia os dados para a API. A tela de login existe só no visual (D20).
+- **Backend:** trocado de Laravel para Node.js 26 + TypeScript + Express 5 + Prisma + Zod (D18). Já existe a rota pública `POST /api/v1/waitlist-entries` (tabela `waitlist_entries`), com logs e rate limit. Login ainda não escolhido (Fase 2).
 - **Frontend:** sem framework de testes. A verificação é feita com `lint` + `build`.
 - **Mobile:** ainda não iniciado; a tecnologia não foi decidida (ver `docs/decisoes.md`).
 
@@ -60,6 +60,20 @@ O responsável pelo projeto está aprendendo programação do zero e quer entend
 - **Siga o código vizinho:** formatação, nomes e estrutura iguais aos arquivos ao lado.
 - **Idioma:** identificadores (variáveis, funções, classes, arquivos, tabelas, rotas da API) em inglês. Textos de interface, comentários, documentação e commits em português do Brasil. Não renomeie código existente só por causa do idioma.
 - **Sem código morto:** não deixe código comentado, imports sem uso ou arquivos abandonados.
+
+### Padrão de nomes
+
+O padrão de mercado do TypeScript (D24). Cada camada usa o seu, e o Prisma traduz entre código e banco.
+
+| O quê | Padrão | Exemplo |
+|---|---|---|
+| Variáveis, funções, campos do JSON da API | `camelCase` | `guardianName`, `createWaitlistEntry` |
+| Tipos, componentes React, models do Prisma | `PascalCase` | `WaitlistEntry`, `WaitlistForm` |
+| Constantes fixas e variáveis de ambiente | `UPPER_SNAKE_CASE` | `MAX_CHILD_AGE_YEARS`, `DATABASE_URL` |
+| Tabelas e colunas do banco | `snake_case` | `waitlist_entries`, `guardian_name` |
+| Endereços (URLs) | `kebab-case` | `/api/v1/waitlist-entries` |
+
+Arquivos têm o nome do que exportam: `createWaitlistEntry.ts`, `WaitlistForm.tsx`.
 
 ## Comentários
 

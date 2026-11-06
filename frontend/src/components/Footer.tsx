@@ -44,18 +44,18 @@ export function Footer() {
           <h3 className="font-display text-lg font-bold text-tinta">Institucional</h3>
           <ul className="mt-5 space-y-3 text-tinta-suave">
             <li>
-              <a href="#sobre" className="transition hover:text-lilas-600">
+              <a href="/#sobre" className="transition hover:text-lilas-600">
                 Sobre a escola
               </a>
             </li>
             <li>
-              <a href="#turmas" className="transition hover:text-lilas-600">
+              <a href="/#turmas" className="transition hover:text-lilas-600">
                 Turmas e horários
               </a>
             </li>
             <li>
-              <a href="#lista-de-espera" className="transition hover:text-lilas-600">
-                Lista de espera
+              <a href="/#matricula" className="transition hover:text-lilas-600">
+                Matrícula
               </a>
             </li>
             <li>

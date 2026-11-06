@@ -27,22 +27,22 @@ Em desenvolvimento, o Vite precisa encaminhar `/api` para `http://localhost:8000
 
 ## 2. Tipos
 
-`frontend/src/types/<recurso>.ts`, espelhando o Resource e o schema Zod do backend (campos em `snake_case`):
+`frontend/src/types/<recurso>.ts`, espelhando o Resource e o schema Zod do backend (campos em `camelCase`):
 
 ```ts
 export type WaitlistEntryInput = {
-  guardian_name: string
+  guardianName: string
   email: string
   phone: string
-  child_name: string
-  child_birth_date: string
+  childName: string
+  childBirthDate: string
   consent: boolean
 }
 
 export type WaitlistEntry = {
   id: string
   status: "pending" | "contacted" | "enrolled"
-  created_at: string
+  createdAt: string
 }
 ```
 
