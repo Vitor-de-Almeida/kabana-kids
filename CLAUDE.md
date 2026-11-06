@@ -29,8 +29,8 @@ Para mudar uma regra, edite o arquivo onde ela mora (nunca crie uma cópia em ou
 
 Atualize esta seção ao concluir cada fase.
 
-- **Fase 1 em andamento.** A landing page está pronta e o formulário (na tela, "Matrícula"; por dentro, lista de espera) envia os dados para a API. A tela de login existe só no visual (D20).
-- **Backend:** trocado de Laravel para Node.js 26 + TypeScript + Express 5 + Prisma + Zod (D18). Já existe a rota pública `POST /api/v1/waitlist-entries` (tabela `waitlist_entries`), com logs e rate limit. Login ainda não escolhido (Fase 2).
+- **Fase 1 com o código pronto; falta o deploy (1.8).** Landing, formulário de matrícula ligado à API, Política de Privacidade (versão `rascunho`, com valores a confirmar pela escola), login da escola e painel em que o `admin` vê e exclui cadastros (D28 a D31). Perfis dono, gerente, professor e pais com permissões centralizadas, aba Equipe, senhas temporárias, 2FA obrigatório, histórico de logins e auditoria imutável (D32 a D44).
+- **Backend:** trocado de Laravel para Node.js 26 + TypeScript + Express 5 + Prisma + Zod (D18). Rotas da lista de espera, login por sessão em cookie feito à mão (D21, D28), auditoria e a rotina `npm run data:purge` (D29).
 - **Frontend:** sem framework de testes. A verificação é feita com `lint` + `build`.
 - **Mobile:** ainda não iniciado; a tecnologia não foi decidida (ver `docs/decisoes.md`).
 
