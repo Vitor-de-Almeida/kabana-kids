@@ -49,6 +49,7 @@ npm run dev
 | `FRONTEND_URL` | Endereço do site; só ele pode chamar a API (CORS) |
 | `DATABASE_URL` | Conexão com o PostgreSQL, com o usuário da aplicação (nunca o `postgres`) |
 | `TEST_DATABASE_URL` | Banco dos testes (`kabana_kids_test`). Precisa terminar em `_test`, porque os testes apagam dados |
+| `TWO_FACTOR_ENCRYPTION_KEY` | Chave que criptografa o segredo do 2FA (32 bytes em base64). Gere com o comando do `.env.example` e guarde uma cópia segura |
 | `TRUST_PROXY` | Quantos proxies da hospedagem ficam antes da API (padrão `0`). Define de onde vem o IP real usado no rate limit |
 | `SHADOW_DATABASE_URL` | Banco temporário (`kabana_kids_shadow`) que o `npm run db:migrate` usa para criar migrations |
 
@@ -61,6 +62,9 @@ npm run dev
 | `backend/` | `npm run typecheck` | Confere os tipos do TypeScript |
 | `backend/` | `npm run db:migrate` | Cria uma migration a partir do `schema.prisma` e aplica no banco local |
 | `backend/` | `npm run db:deploy` | Aplica as migrations em produção |
+| `backend/` | `npm run user:create-admin` | Cria a conta do dono da escola, uma só (pede a senha sem mostrá-la) |
+| `backend/` | `npm run user:reset-access` | Recupera o acesso do dono que esqueceu a senha ou perdeu o 2FA (só no terminal do servidor) |
+| `backend/` | `npm run data:purge` | Aplica os prazos de guarda dos dados (rodar uma vez por dia em produção) |
 | `backend/` | `npm audit` | Procura vulnerabilidades nas dependências |
 | `frontend/` | `npm run lint` | Analisa o código com ESLint |
 | `frontend/` | `npm run build` | Checa os tipos e gera a versão de produção |
