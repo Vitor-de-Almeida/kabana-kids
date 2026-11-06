@@ -22,7 +22,7 @@ O login é feito à mão, sem biblioteca de autenticação (D21), e precisa cump
 - Mensagens de erro genéricas: "E-mail ou senha inválidos". Nunca revele se um e-mail está cadastrado (também na recuperação de senha).
 - Senhas: guarde só o hash, com um algoritmo próprio para senhas (Argon2id ou bcrypt), e siga as regras da D32 (tamanho e tipos de caractere, e a nova senha não pode parecer a anterior). Nunca registre senhas em log nem as retorne em respostas.
 - 2FA é obrigatório (D42): dono e gerente desde o primeiro acesso; os demais a partir do 4º login.
-- Senhas temporárias são geradas pelo sistema, valem 24 h e um login, e obrigam a criar uma senha nova (D41). Nunca crie rota HTTP para recuperar a conta do dono.
+- Senhas são criadas ou redefinidas por **link de uso único no e-mail** (D45): token só como hash, depois do `#` no endereço, com prazo curto. Ninguém vê a senha de ninguém. Só a recuperação do dono usa senha temporária, e só pelo terminal (D41); nunca crie rota HTTP para isso.
 
 ## Autorização
 

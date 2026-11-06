@@ -29,6 +29,7 @@ backend/
 │   ├── policies/              # Quem pode fazer o quê em cada recurso (waitlistEntryPolicy.ts)
 │   ├── security/              # Senhas (Argon2id) e sessões: token, cookie e prazos (D28)
 │   ├── scripts/               # Comandos de terminal (npm run user:create-admin, data:purge)
+│   ├── mail/                  # Envio de e-mail (nodemailer) e textos dos e-mails (D45)
 │   ├── resources/             # Formato da resposta JSON (waitlistEntryResource.ts)
 │   └── generated/prisma/      # Código gerado pelo Prisma (`npm run db:generate`); não edite nem commite
 └── tests/                     # Testes com Vitest (tests/api/v1/<recurso>/)
