@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom"
+
 const contatos = [
   { rotulo: "Endereço", valor: "Rua das Acácias, 120 — Jardim Aurora, São Paulo/SP" },
   { rotulo: "Telefone", valor: "(11) 4002-8922" },
@@ -59,9 +61,9 @@ export function Footer() {
               </a>
             </li>
             <li>
-              <a id="privacidade" href="#privacidade" className="transition hover:text-lilas-600">
+              <Link to="/politica-de-privacidade" className="transition hover:text-lilas-600">
                 Política de Privacidade
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
