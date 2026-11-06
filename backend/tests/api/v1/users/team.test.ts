@@ -1,10 +1,9 @@
-// Testes da aba Equipe: criar contas, redefinir senhas e permissões.
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+// Testes da aba Equipe: criar contas, enviar links de senha e permissões.
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { createV1Router } from "../../../../src/routes/v1.ts"
 import { prisma } from "../../../../src/db.ts"
 import type { User } from "../../../../src/generated/prisma/client.ts"
-import { passwordSchema } from "../../../../src/schemas/users/passwordSchema.ts"
 import {
   FRONTEND_ORIGIN,
   TEST_PASSWORD,
@@ -12,15 +11,14 @@ import {
   createTestUser,
   enableTestTwoFactor,
   loginAs,
+  mailsTo,
   startTestServer,
   testTwoFactorCode,
+  tokenFromMail,
+  waitForMail,
 } from "../../../helpers.ts"
 
-type Body = {
-  data: { temporaryPassword: string; user: Record<string, unknown> } & Record<string, unknown>
-  message: string
-  passwordChangeRequired?: boolean
-}
+type Body = { data: Record<string, unknown>; message: string }
 
 const NEW_PASSWORD = "Girassol#Azul88"
 
@@ -41,7 +39,6 @@ describe("team", () => {
   })
 
   afterEach(async () => {
-    vi.restoreAllMocks()
     await server.close()
   })
 
@@ -57,11 +54,11 @@ describe("team", () => {
     })
   }
 
-  function login(email: string, password: string, code?: string) {
-    return fetch(`${server.url}/api/v1/sessions`, {
+  function post(path: string, body: unknown) {
+    return fetch(`${server.url}/api/v1${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Origin: FRONTEND_ORIGIN },
-      body: JSON.stringify({ email, password, code }),
+      body: JSON.stringify(body),
     })
   }
 
@@ -71,37 +68,50 @@ describe("team", () => {
 
   async function createMember(role: string, email = "nova@example.com") {
     const response = await send(await loginOwner(), "POST", "/users", { name: "Nova Pessoa", email, role })
-    return { response, body: (await response.json()) as Body }
+    return { response, text: await response.text() }
   }
 
   describe("creating accounts", () => {
-    // Dono cria gerente: senha temporária forte, sem cache
-    it("lets the owner create a manager with a temporary password", async () => {
-      const { response, body } = await createMember("manager")
+    // Dono cria a conta; a pessoa recebe um convite por e-mail
+    it("lets the owner create an account and emails an invite", async () => {
+      const { response, text } = await createMember("manager")
 
       expect(response.status).toBe(201)
-      expect(response.headers.get("cache-control")).toBe("no-store")
-      expect(passwordSchema.safeParse(body.data.temporaryPassword).success).toBe(true)
-      expect(body.data.user).toMatchObject({ role: "manager", mustChangePassword: true, isOwner: false })
+      expect((JSON.parse(text) as Body).data).toMatchObject({ role: "manager", mustChangePassword: true, isOwner: false })
+      const mail = await waitForMail("nova@example.com")
+      expect(mail.subject).toBe("Crie a sua senha - Kabana Kids")
     })
 
-    // A auditoria registra, sem a senha
-    it("audits the creation without the password", async () => {
-      const { body } = await createMember("teacher")
+    // Ninguém vê senha: a resposta não traz senha nem link
+    it("never shows a password or the link to the owner", async () => {
+      const { text } = await createMember("teacher")
+
+      const token = tokenFromMail(await waitForMail("nova@example.com"))
+      const fields = Object.keys((JSON.parse(text) as Body).data)
+      expect(fields).not.toContain("password")
+      expect(fields).not.toContain("temporaryPassword")
+      expect(text).not.toContain(token)
+    })
+
+    // O convite cria a senha, e a pessoa entra com ela
+    it("lets the invited person create a password and log in", async () => {
+      await createMember("teacher")
+      const token = tokenFromMail(await waitForMail("nova@example.com"))
+
+      const created = await post("/password-resets", { token, newPassword: NEW_PASSWORD })
+      const login = await post("/sessions", { email: "nova@example.com", password: NEW_PASSWORD })
+
+      expect(created.status).toBe(204)
+      expect(login.status).toBe(201)
+      expect(((await login.json()) as Body).data.mustChangePassword).toBe(false)
+    })
+
+    // A criação fica na auditoria
+    it("audits the creation", async () => {
+      const { text } = await createMember("teacher")
 
       const audit = await prisma.auditLog.findFirstOrThrow({ where: { action: "user.created" } })
-      expect(audit).toMatchObject({ userId: owner.id, targetId: body.data.user.id, origin: "panel", result: "success" })
-      expect(JSON.stringify(audit)).not.toContain(body.data.temporaryPassword)
-    })
-
-    // Nenhum log mostra a senha temporária
-    it("never writes the temporary password to the logs", async () => {
-      const logSpy = vi.spyOn(console, "log")
-
-      const { body } = await createMember("teacher")
-
-      const logs = logSpy.mock.calls.map((call) => String(call[0])).join("\n")
-      expect(logs).not.toContain(body.data.temporaryPassword)
+      expect(audit).toMatchObject({ userId: owner.id, targetId: (JSON.parse(text) as Body).data.id, origin: "panel" })
     })
 
     // Ninguém cria um segundo admin (dono)
@@ -129,75 +139,43 @@ describe("team", () => {
     })
   })
 
-  describe("temporary password", () => {
-    // Primeiro login: só dá para trocar a senha
-    it("forces a password change on the first login", async () => {
-      const { body } = await createMember("teacher")
-      const temporary = body.data.temporaryPassword
+  describe("sending reset links", () => {
+    const resetLink = (cookie: string, id: string) => send(cookie, "POST", `/users/${id}/password-reset-link`)
 
-      const first = await login("nova@example.com", temporary)
-      const cookie = (first.headers.get("set-cookie") ?? "").split(";")[0] ?? ""
-      const blocked = await send(cookie, "GET", "/me/logins")
-      const changed = await send(cookie, "PUT", "/me/password", { currentPassword: temporary, newPassword: NEW_PASSWORD })
-      const allowed = await send(cookie, "GET", "/me/logins")
-
-      expect(first.status).toBe(201)
-      expect(blocked.status).toBe(403)
-      expect(((await blocked.json()) as Body).passwordChangeRequired).toBe(true)
-      expect(changed.status).toBe(204)
-      expect(allowed.status).toBe(200)
-    })
-
-    // Vale uma vez só
-    it("works only once", async () => {
-      const { body } = await createMember("teacher")
-
-      const first = await login("nova@example.com", body.data.temporaryPassword)
-      const second = await login("nova@example.com", body.data.temporaryPassword)
-
-      expect(first.status).toBe(201)
-      expect(second.status).toBe(401)
-    })
-
-    // Vence em 24 horas
-    it("expires after 24 hours", async () => {
-      const { body } = await createMember("teacher")
-      await prisma.user.update({
-        where: { email: "nova@example.com" },
-        data: { temporaryPasswordExpiresAt: new Date(Date.now() - 1000) },
-      })
-
-      const response = await login("nova@example.com", body.data.temporaryPassword)
-
-      expect(response.status).toBe(401)
-    })
-  })
-
-  describe("resetting passwords", () => {
-    // Dono redefine a senha do gerente: sessões caem, 2FA fica
-    it("lets the owner reset a manager and keeps two-factor", async () => {
+    // Dono manda o link ao gerente: sessões caem, 2FA fica
+    it("lets the owner send a link to a manager and keeps two-factor", async () => {
       const managerCookie = await loginManager()
 
-      const response = await send(await loginOwner(), "POST", `/users/${manager.id}/password-reset`)
+      const response = await resetLink(await loginOwner(), manager.id)
 
-      expect(response.status).toBe(201)
+      expect(response.status).toBe(202)
+      expect(await response.text()).not.toMatch(/#token=/)
       expect((await send(managerCookie, "GET", "/me")).status).toBe(401)
+      await waitForMail("manager@example.com")
       const saved = await prisma.user.findUniqueOrThrow({ where: { id: manager.id } })
       expect(saved.twoFactorEnabledAt).not.toBeNull()
       expect(saved.role).toBe("manager")
-      expect(saved.mustChangePassword).toBe(true)
     })
 
-    // Gerente redefine professor e pais
-    it("lets a manager reset teachers and parents", async () => {
+    // Até usar o link, a senha antiga continua valendo
+    it("keeps the old password until the link is used", async () => {
+      await resetLink(await loginOwner(), teacher.id)
+
+      const login = await post("/sessions", { email: "teacher@example.com", password: TEST_PASSWORD })
+
+      expect(login.status).toBe(201)
+    })
+
+    // Gerente manda link a professor e pais
+    it("lets a manager send links to teachers and parents", async () => {
       const parent = await createTestUser("parent")
       const cookie = await loginManager()
 
-      const teacherReset = await send(cookie, "POST", `/users/${teacher.id}/password-reset`)
-      const parentReset = await send(cookie, "POST", `/users/${parent.id}/password-reset`)
+      const teacherLink = await resetLink(cookie, teacher.id)
+      const parentLink = await resetLink(cookie, parent.id)
 
-      expect(teacherReset.status).toBe(201)
-      expect(parentReset.status).toBe(201)
+      expect(teacherLink.status).toBe(202)
+      expect(parentLink.status).toBe(202)
     })
 
     // Gerente não mexe em outro gerente nem no dono
@@ -205,25 +183,26 @@ describe("team", () => {
       const otherManager = await createTestUser("manager", "gerente2@example.com")
       const cookie = await loginManager()
 
-      const managerReset = await send(cookie, "POST", `/users/${otherManager.id}/password-reset`)
-      const ownerReset = await send(cookie, "POST", `/users/${owner.id}/password-reset`)
+      const managerLink = await resetLink(cookie, otherManager.id)
+      const ownerLink = await resetLink(cookie, owner.id)
 
-      expect(managerReset.status).toBe(403)
-      expect(ownerReset.status).toBe(403)
+      expect(managerLink.status).toBe(403)
+      expect(ownerLink.status).toBe(403)
+      expect(await mailsTo("gerente2@example.com")).toHaveLength(0)
     })
 
-    // Professor não redefine senhas de ninguém
-    it("blocks a teacher from resetting passwords", async () => {
+    // Professor não manda link para ninguém
+    it("blocks a teacher from sending links", async () => {
       const parent = await createTestUser("parent")
 
-      const response = await send(await loginTeacher(), "POST", `/users/${parent.id}/password-reset`)
+      const response = await resetLink(await loginTeacher(), parent.id)
 
       expect(response.status).toBe(403)
     })
 
     // Nem o dono recupera a própria conta pelo site
     it("offers no web route to recover the owner account", async () => {
-      const response = await send(await loginOwner(), "POST", `/users/${owner.id}/password-reset`)
+      const response = await resetLink(await loginOwner(), owner.id)
 
       const paths = createV1Router()
         .stack.map((layer) => (layer.route as { path?: string } | undefined)?.path ?? "")
@@ -232,17 +211,17 @@ describe("team", () => {
       expect(paths).not.toMatch(/recover|reset-access/)
     })
 
-    // A redefinição fica na auditoria
-    it("audits the reset", async () => {
-      await send(await loginOwner(), "POST", `/users/${teacher.id}/password-reset`)
+    // O envio fica na auditoria
+    it("audits the link", async () => {
+      await resetLink(await loginOwner(), teacher.id)
 
-      const audit = await prisma.auditLog.findFirstOrThrow({ where: { action: "user.password_reset" } })
+      const audit = await prisma.auditLog.findFirstOrThrow({ where: { action: "user.password_reset_link_sent" } })
       expect(audit).toMatchObject({ userId: owner.id, targetId: teacher.id })
     })
 
     // Conta inexistente: 404
     it("returns 404 for an unknown account", async () => {
-      const response = await send(await loginOwner(), "POST", "/users/01ARZ3NDEKTSV4RRFFQ69G5FAV/password-reset")
+      const response = await resetLink(await loginOwner(), "01ARZ3NDEKTSV4RRFFQ69G5FAV")
 
       expect(response.status).toBe(404)
     })

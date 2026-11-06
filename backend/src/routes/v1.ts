@@ -6,15 +6,24 @@ import {
   storeTwoFactorSetup,
   updatePassword,
 } from "../controllers/v1/accountController.ts"
+import { storePasswordReset, storePasswordResetRequest } from "../controllers/v1/passwordResetController.ts"
 import { destroySession, showCurrentUser, storeSession } from "../controllers/v1/sessionController.ts"
-import { indexUsers, storePasswordReset, storeUser } from "../controllers/v1/userController.ts"
+import { indexUsers, storePasswordResetLink, storeUser } from "../controllers/v1/userController.ts"
 import {
   destroyWaitlistEntry,
   indexWaitlistEntries,
   storeWaitlistEntry,
 } from "../controllers/v1/waitlistEntryController.ts"
 import { authorize } from "../middleware/authorize.ts"
-import { accountLimit, loginIpLimit, loginLimit, publicFormLimit, teamLimit } from "../middleware/rateLimits.ts"
+import {
+  accountLimit,
+  loginIpLimit,
+  loginLimit,
+  passwordResetLimit,
+  passwordResetRequestLimits,
+  publicFormLimit,
+  teamLimit,
+} from "../middleware/rateLimits.ts"
 import { requirePasswordChanged, requireTwoFactor } from "../middleware/requireAccountReady.ts"
 import { requireAuth } from "../middleware/requireAuth.ts"
 import { requireTrustedOrigin } from "../middleware/requireTrustedOrigin.ts"
@@ -22,6 +31,8 @@ import { validate } from "../middleware/validate.ts"
 import { canListUsers } from "../policies/userPolicy.ts"
 import { canAnonymizeWaitlistEntry, canListWaitlistEntries } from "../policies/waitlistEntryPolicy.ts"
 import { changePasswordSchema } from "../schemas/auth/changePassword.ts"
+import { completePasswordResetSchema } from "../schemas/auth/completePasswordReset.ts"
+import { requestPasswordResetSchema } from "../schemas/auth/requestPasswordReset.ts"
 import { confirmTwoFactorSchema } from "../schemas/auth/confirmTwoFactor.ts"
 import { createSessionSchema } from "../schemas/auth/createSession.ts"
 import { createStaffUserSchema } from "../schemas/users/createStaffUser.ts"
@@ -40,6 +51,14 @@ export function createV1Router(): Router {
   // Públicas: sempre com rate limit
   router.post("/waitlist-entries", publicFormLimit(), validate(storeWaitlistEntrySchema), storeWaitlistEntry)
   router.post("/sessions", loginIpLimit(), loginLimit(), validate(createSessionSchema), storeSession)
+  // Link de senha por e-mail (D45)
+  router.post(
+    "/password-reset-requests",
+    ...passwordResetRequestLimits(),
+    validate(requestPasswordResetSchema),
+    storePasswordResetRequest,
+  )
+  router.post("/password-resets", passwordResetLimit(), validate(completePasswordResetSchema), storePasswordReset)
 
   // Privadas: exigem login
   router.use(requireAuth)
@@ -57,7 +76,7 @@ export function createV1Router(): Router {
   router.use(requireTwoFactor)
   router.get("/users", authorize(canListUsers), indexUsers)
   router.post("/users", teamLimit(), validate(createStaffUserSchema), storeUser)
-  router.post("/users/:id/password-reset", teamLimit(), validate(userParamsSchema, "params"), storePasswordReset)
+  router.post("/users/:id/password-reset-link", teamLimit(), validate(userParamsSchema, "params"), storePasswordResetLink)
   router.get(
     "/waitlist-entries",
     authorize(canListWaitlistEntries),

@@ -63,6 +63,34 @@ describe("recoverOwnerAccess", () => {
     expect((await login(temporary)).status).toBe(401)
   })
 
+  // Com a senha temporária, só dá para criar uma senha nova
+  it("forces a new password before anything else", async () => {
+    const temporary = await recoverOwnerAccess(owner, "terminal:teste")
+    const cookie = ((await login(temporary)).headers.get("set-cookie") ?? "").split(";")[0] ?? ""
+    const call = (method: string, path: string, body?: unknown) =>
+      fetch(`${server.url}/api/v1${path}`, {
+        method,
+        headers: { "Content-Type": "application/json", Origin: FRONTEND_ORIGIN, Cookie: cookie },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      })
+
+    const blocked = await call("GET", "/me/logins")
+    const changed = await call("PUT", "/me/password", { currentPassword: temporary, newPassword: "Girassol#Azul88" })
+    const allowed = await call("GET", "/me/logins")
+
+    expect(blocked.status).toBe(403)
+    expect(changed.status).toBe(204)
+    expect(allowed.status).toBe(200)
+  })
+
+  // A senha temporária vence em 24 horas
+  it("expires the temporary password after 24 hours", async () => {
+    const temporary = await recoverOwnerAccess(owner, "terminal:teste")
+    await prisma.user.update({ where: { id: owner.id }, data: { temporaryPasswordExpiresAt: new Date(Date.now() - 1000) } })
+
+    expect((await login(temporary)).status).toBe(401)
+  })
+
   // Auditoria: origem terminal, sem senha
   it("audits the recovery as coming from the terminal", async () => {
     const temporary = await recoverOwnerAccess(owner, "terminal:teste")

@@ -1,4 +1,6 @@
+import { readFile, readdir, rm } from "node:fs/promises"
 import type { Server } from "node:http"
+import { join } from "node:path"
 
 import { createUser } from "../src/actions/users/createUser.ts"
 import { createApp } from "../src/app.ts"
@@ -33,7 +35,43 @@ export async function startTestServer(): Promise<{ url: string; close: () => Pro
 // TRUNCATE: o banco protege histórico e dono contra DELETE (D40, D44).
 // Só o banco de testes (*_test) passa por aqui.
 export async function cleanDatabase(): Promise<void> {
-  await prisma.$executeRaw`TRUNCATE rate_limit_hits, audit_logs, login_events, sessions, users, waitlist_entries`
+  await prisma.$executeRaw`TRUNCATE rate_limit_hits, audit_logs, login_events, password_reset_tokens, sessions, users, waitlist_entries`
+  await rm(TEST_OUTBOX, { recursive: true, force: true })
+}
+
+// Mesma pasta do MAIL_OUTBOX_DIR do vitest.config.ts
+const TEST_OUTBOX = "storage/test-mail-outbox"
+
+export type SentMail = { to: string; subject: string; text: string }
+
+async function readOutbox(): Promise<SentMail[]> {
+  const files = (await readdir(TEST_OUTBOX).catch(() => [])).sort()
+  return Promise.all(files.map(async (file) => JSON.parse(await readFile(join(TEST_OUTBOX, file), "utf8")) as SentMail))
+}
+
+export async function mailsTo(to: string): Promise<SentMail[]> {
+  return (await readOutbox()).filter((mail) => mail.to === to)
+}
+
+// Alguns envios não são esperados pela API (D45): aguarda até 2 s
+export async function waitForMail(to: string): Promise<SentMail> {
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const mails = await mailsTo(to)
+    const last = mails[mails.length - 1]
+    if (last) {
+      return last
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50))
+  }
+  throw new Error(`Nenhum e-mail para ${to}`)
+}
+
+export function tokenFromMail(mail: SentMail): string {
+  const match = /#token=([A-Za-z0-9_-]+)/.exec(mail.text)
+  if (!match?.[1]) {
+    throw new Error("E-mail sem link de senha")
+  }
+  return match[1]
 }
 
 export function createTestUser(role: UserRole, email = `${role}@example.com`): Promise<User> {

@@ -30,6 +30,7 @@ export async function purgeExpiredData(now: Date = new Date()): Promise<PurgeRes
   })
   const sessions = await prisma.session.deleteMany({ where: { expiresAt: { lt: now } } })
   const rateLimitHits = await prisma.rateLimitHit.deleteMany({ where: { resetAt: { lt: now } } })
+  await prisma.passwordResetToken.deleteMany({ where: { OR: [{ expiresAt: { lt: now } }, { usedAt: { not: null } }] } })
   // Históricos: o banco só deixa apagar depois de 10 anos (D44)
   const tenYearsAgo = yearsBefore(now, RELEVANT_DATA_YEARS)
   const auditLogs = await prisma.auditLog.deleteMany({ where: { createdAt: { lt: tenYearsAgo } } })

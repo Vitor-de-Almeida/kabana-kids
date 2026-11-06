@@ -56,29 +56,30 @@ enum UserRole {
 }
 
 model User {
-  id                         String       @id @default(ulid())
-  name                       String       @db.VarChar(120)
-  email                      String       @unique @db.VarChar(254)
-  passwordHash               String       @map("password_hash") @db.VarChar(255)
+  id                         String               @id @default(ulid())
+  name                       String               @db.VarChar(120)
+  email                      String               @unique @db.VarChar(254)
+  passwordHash               String               @map("password_hash") @db.VarChar(255)
   role                       UserRole
   // Dono: true ou NULL; o @unique impede dois donos (D40)
-  isOwner                    Boolean?     @unique @map("is_owner")
+  isOwner                    Boolean?             @unique @map("is_owner")
   // Senha temporária: vale 24 h, uma vez só (D41)
-  mustChangePassword         Boolean      @default(false) @map("must_change_password")
-  temporaryPasswordExpiresAt DateTime?    @map("temporary_password_expires_at")
-  temporaryPasswordUsedAt    DateTime?    @map("temporary_password_used_at")
+  mustChangePassword         Boolean              @default(false) @map("must_change_password")
+  temporaryPasswordExpiresAt DateTime?            @map("temporary_password_expires_at")
+  temporaryPasswordUsedAt    DateTime?            @map("temporary_password_used_at")
   // Conta os logins: 2FA obrigatório depois do 3º (D42)
-  loginCount                 Int          @default(0) @map("login_count")
+  loginCount                 Int                  @default(0) @map("login_count")
   // 2FA (D33): segredo criptografado; ativo quando enabledAt existe
-  twoFactorSecret            String?      @map("two_factor_secret") @db.VarChar(255)
-  twoFactorEnabledAt         DateTime?    @map("two_factor_enabled_at")
+  twoFactorSecret            String?              @map("two_factor_secret") @db.VarChar(255)
+  twoFactorEnabledAt         DateTime?            @map("two_factor_enabled_at")
   // Impede reusar o mesmo código de 6 dígitos
-  twoFactorLastStep          Int?         @map("two_factor_last_step")
-  createdAt                  DateTime     @default(now()) @map("created_at")
-  updatedAt                  DateTime     @updatedAt @map("updated_at")
+  twoFactorLastStep          Int?                 @map("two_factor_last_step")
+  createdAt                  DateTime             @default(now()) @map("created_at")
+  updatedAt                  DateTime             @updatedAt @map("updated_at")
   sessions                   Session[]
   auditLogs                  AuditLog[]
   loginEvents                LoginEvent[]
+  passwordResetTokens        PasswordResetToken[]
 
   @@map("users")
 }
@@ -139,4 +140,20 @@ model RateLimitHit {
 
   @@index([resetAt])
   @@map("rate_limit_hits")
+}
+
+// Link de senha por e-mail (D45): só o hash, vale uma vez
+model PasswordResetToken {
+  id        String    @id @default(ulid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique @map("token_hash") @db.Char(64)
+  // "invite" (conta nova) ou "reset" (redefinição)
+  purpose   String    @db.VarChar(20)
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }

@@ -18,6 +18,7 @@ type LimitOptions = {
   key?: (request: Request, response: Response) => string
   // Login (D36): a espera dobra a cada tentativa bloqueada
   escalate?: boolean
+  windowMs?: number
 }
 
 // "Aguarde 1 minuto" ou "Aguarde 8 minutos", conforme a penalidade
@@ -29,9 +30,9 @@ function loginWaitMessage(request: Request): string {
   return `Muitas tentativas de login. Aguarde ${wait} e tente de novo. Cada nova tentativa antes disso aumenta a espera.`
 }
 
-function limitPerMinute({ name, limit, message, key, escalate = false }: LimitOptions) {
+function limitPerMinute({ name, limit, message, key, escalate = false, windowMs = ONE_MINUTE_MS }: LimitOptions) {
   return rateLimit({
-    windowMs: ONE_MINUTE_MS,
+    windowMs,
     limit,
     standardHeaders: "draft-8",
     legacyHeaders: false,
@@ -90,4 +91,26 @@ export function teamLimit() {
     message: `Muitas alterações seguidas na equipe. ${WAIT_MESSAGE}`,
     key: (_request, response) => getCurrentUser(response).id,
   })
+}
+
+const FIFTEEN_MINUTES_MS = 15 * ONE_MINUTE_MS
+const RESET_WAIT = "Muitas tentativas. Aguarde 15 minutos e tente de novo."
+
+// "Esqueci minha senha": 5 pedidos por IP e 3 por e-mail a cada 15 minutos
+export function passwordResetRequestLimits() {
+  return [
+    limitPerMinute({ name: "reset-request-ip", limit: 5, windowMs: FIFTEEN_MINUTES_MS, message: RESET_WAIT }),
+    limitPerMinute({
+      name: "reset-request-email",
+      limit: 3,
+      windowMs: FIFTEEN_MINUTES_MS,
+      message: RESET_WAIT,
+      key: (request) => loginEmail(request),
+    }),
+  ]
+}
+
+// Criar a senha pelo link: 10 tentativas por IP a cada 15 minutos
+export function passwordResetLimit() {
+  return limitPerMinute({ name: "reset-complete", limit: 10, windowMs: FIFTEEN_MINUTES_MS, message: RESET_WAIT })
 }

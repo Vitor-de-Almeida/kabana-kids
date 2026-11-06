@@ -9,7 +9,8 @@ export type AuditEntry = {
   targetType: string
   targetId: string | null
   requestId: string | null
-  origin?: "panel" | "terminal"
+  // site = página pública, como "esqueci minha senha"
+  origin?: "panel" | "terminal" | "site"
   result?: "success" | "denied"
   // Usuário do servidor, quando veio do terminal
   operator?: string | null
