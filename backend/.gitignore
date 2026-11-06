@@ -5,3 +5,5 @@ node_modules
 src/generated
 coverage
 *.log
+# E-mails locais de desenvolvimento e testes (têm links de senha)
+storage

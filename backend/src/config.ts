@@ -24,8 +24,38 @@ function encryptionKey(name: string): Buffer {
   return key
 }
 
+export type MailConfig =
+  | { transport: "smtp"; from: string; host: string; port: number; user: string; password: string }
+  | { transport: "outbox"; from: string; outboxDir: string }
+
+// E-mail (D45): SMTP de verdade, ou uma pasta local só fora de produção
+function mailConfig(env: string): MailConfig {
+  const transport = process.env.MAIL_TRANSPORT ?? (env === "production" ? "smtp" : "outbox")
+
+  if (transport === "smtp") {
+    return {
+      transport,
+      from: required("MAIL_FROM"),
+      host: required("SMTP_HOST"),
+      port: nonNegativeInteger("SMTP_PORT", 587),
+      user: required("SMTP_USER"),
+      password: required("SMTP_PASSWORD"),
+    }
+  }
+  if (transport === "outbox" && env !== "production") {
+    return {
+      transport,
+      from: process.env.MAIL_FROM ?? "Kabana Kids <nao-responda@kabanakids.com.br>",
+      outboxDir: process.env.MAIL_OUTBOX_DIR ?? "storage/mail-outbox",
+    }
+  }
+  throw new Error("MAIL_TRANSPORT precisa ser smtp em produção (veja .env.example)")
+}
+
+const env = process.env.NODE_ENV ?? "development"
+
 export const config = {
-  env: process.env.NODE_ENV ?? "development",
+  env,
   port: Number(process.env.PORT ?? 8000),
   frontendUrl: required("FRONTEND_URL"),
   databaseUrl: required("DATABASE_URL"),
@@ -33,6 +63,7 @@ export const config = {
   trustProxy: nonNegativeInteger("TRUST_PROXY", 0),
   // Criptografa o segredo do 2FA no banco (D33)
   twoFactorEncryptionKey: encryptionKey("TWO_FACTOR_ENCRYPTION_KEY"),
+  mail: mailConfig(env),
   // Troque ao publicar uma nova Política de Privacidade (1.5)
   privacyPolicyVersion: "rascunho",
 }
