@@ -198,6 +198,24 @@ describe("POST /api/v1/waitlist-entries", () => {
     expect(await readBody(blocked)).toEqual({ message: "Muitas tentativas de cadastro. Aguarde um minuto e tente de novo." })
   })
 
+  // Um IP falso no cabeçalho não fura o rate limit
+  it("does not let a fake X-Forwarded-For bypass the rate limit", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    const postFromFakeIp = (attempt: number) =>
+      fetch(`${server.url}/api/v1/waitlist-entries`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Forwarded-For": `203.0.113.${attempt}` },
+        body: JSON.stringify(validEntry()),
+      })
+
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      await postFromFakeIp(attempt)
+    }
+    const blocked = await postFromFakeIp(6)
+
+    expect(blocked.status).toBe(429)
+  })
+
   // Rastreabilidade: log com IDs e sem dados pessoais
   it("logs the creation with ids and no personal data", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {})

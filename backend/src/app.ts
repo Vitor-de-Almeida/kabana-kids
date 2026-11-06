@@ -12,6 +12,8 @@ export function createApp() {
   const app = express()
 
   app.disable("x-powered-by")
+  // Define de onde vem o IP real usado no rate limit
+  app.set("trust proxy", config.trustProxy)
   app.use(requestContext)
   app.use(helmet())
   // O site lê o X-Request-Id para mostrar no erro 500 (D25)
