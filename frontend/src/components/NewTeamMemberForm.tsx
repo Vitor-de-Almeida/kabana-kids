@@ -11,7 +11,7 @@ const campo =
   "w-full rounded-2xl border border-ceu-200 bg-white px-4 py-3 text-tinta outline-none transition focus:border-lilas-400 focus:ring-4 focus:ring-lilas-100 aria-invalid:border-lilas-500"
 
 type NewTeamMemberFormProps = {
-  onCreated: (user: TeamMember, temporaryPassword: string) => void
+  onCreated: (user: TeamMember) => void
 }
 
 export function NewTeamMemberForm({ onCreated }: NewTeamMemberFormProps) {
@@ -34,7 +34,7 @@ export function NewTeamMemberForm({ onCreated }: NewTeamMemberFormProps) {
         role: String(data.get("perfil") ?? "") as NewTeamMemberInput["role"],
       })
       form.reset()
-      onCreated(created.user, created.temporaryPassword)
+      onCreated(created)
     } catch (caught) {
       const apiError = toApiError(caught)
       setFieldErrors(apiError.kind === "validation" ? apiError.fieldErrors : {})
@@ -48,7 +48,7 @@ export function NewTeamMemberForm({ onCreated }: NewTeamMemberFormProps) {
     <form onSubmit={handleSubmit} className="rounded-3xl border border-ceu-100 bg-white p-6 shadow-lg shadow-ceu-100/60 sm:p-8">
       <h2 className="font-display text-xl font-bold text-tinta">Nova pessoa na equipe</h2>
       <p className="mt-2 text-sm text-tinta-suave">
-        O sistema cria uma senha temporária. A pessoa troca a senha e ativa o 2FA no primeiro acesso.
+        A pessoa recebe um convite por e-mail para criar a própria senha. Ninguém da escola fica sabendo a senha.
       </p>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">

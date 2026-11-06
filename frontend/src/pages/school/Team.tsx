@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from "react"
 
 import { NewTeamMemberForm } from "../../components/NewTeamMemberForm"
-import { TemporaryPasswordNotice } from "../../components/TemporaryPasswordNotice"
 import { useAuth } from "../../hooks/useAuth"
 import { describeApiError, toApiError } from "../../services/apiError"
-import { listTeam, resetMemberPassword } from "../../services/users"
+import { listTeam, sendPasswordResetLink } from "../../services/users"
 import type { TeamMember, User, UserRole } from "../../types/user"
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -30,7 +29,7 @@ export function TeamPage() {
   const { user, forgetUser } = useAuth()
   const [members, setMembers] = useState<TeamMember[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<{ name: string; password: string } | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [reloadCount, setReloadCount] = useState(0)
 
   const showError = useCallback(
@@ -57,15 +56,15 @@ export function TeamPage() {
 
   async function handleReset(member: TeamMember) {
     const confirmed = window.confirm(
-      `Redefinir a senha de ${member.name}? A pessoa será desconectada de todos os aparelhos.`,
+      `Enviar um link de redefinição de senha para ${member.email}? A pessoa será desconectada de todos os aparelhos.`,
     )
     if (!confirmed) {
       return
     }
     setError(null)
     try {
-      setNotice({ name: member.name, password: await resetMemberPassword(member.id) })
-      setReloadCount((count) => count + 1)
+      await sendPasswordResetLink(member.id)
+      setNotice(`Enviamos um link de redefinição de senha para ${member.email}. Ele vale por 30 minutos.`)
     } catch (caught) {
       showError(caught)
     }
@@ -81,7 +80,9 @@ export function TeamPage() {
       <h1 className="font-display text-3xl font-bold text-tinta">Equipe</h1>
 
       {notice && (
-        <TemporaryPasswordNotice name={notice.name} password={notice.password} onClose={() => setNotice(null)} />
+        <p role="status" className="rounded-2xl bg-ceu-50 p-4 text-sm font-semibold text-ceu-700">
+          {notice}
+        </p>
       )}
       {error && (
         <p role="alert" className="rounded-2xl bg-lilas-50 p-4 text-sm font-semibold text-lilas-700">
@@ -91,8 +92,8 @@ export function TeamPage() {
 
       {user.isOwner && (
         <NewTeamMemberForm
-          onCreated={(created, password) => {
-            setNotice({ name: created.name, password })
+          onCreated={(created) => {
+            setNotice(`Conta criada. Enviamos um convite para ${created.email}, que vale por 24 horas.`)
             setReloadCount((count) => count + 1)
           }}
         />
@@ -111,7 +112,7 @@ export function TeamPage() {
               <p className="text-sm break-all text-tinta-suave">{member.email}</p>
               <p className="mt-1 text-xs text-tinta-suave">
                 {ROLE_LABELS[member.role]} · {member.twoFactorEnabled ? "2FA ativo" : "2FA não ativado"}
-                {member.mustChangePassword && " · aguardando o primeiro acesso"}
+                {member.mustChangePassword && " · aguardando criar a senha"}
               </p>
             </div>
             {canShowReset(user, member) && (
@@ -120,7 +121,7 @@ export function TeamPage() {
                 onClick={() => handleReset(member)}
                 className="rounded-full border border-lilas-200 px-4 py-2 text-xs font-bold text-lilas-700 transition hover:bg-lilas-50"
               >
-                Redefinir senha
+                Enviar link de senha
               </button>
             )}
           </li>

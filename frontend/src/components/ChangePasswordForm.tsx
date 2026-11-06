@@ -6,14 +6,9 @@ import { useAuth } from "../hooks/useAuth"
 import { changePassword } from "../services/auth"
 import { describeApiError, toApiError } from "../services/apiError"
 
-// Mesmas regras do backend (D32); quem decide é a API
-const regrasDaSenha = [
-  "Pelo menos 10 caracteres",
-  "Uma letra maiúscula e uma minúscula",
-  "Um número",
-  "Um caractere especial, como ! @ # ou %",
-  "Bem diferente da senha atual",
-]
+import { PASSWORD_RULES } from "./passwordRules"
+
+const regrasDaSenha = [...PASSWORD_RULES, "Bem diferente da senha atual"]
 
 const rotuloCampo = "mb-2 block text-sm font-semibold text-tinta"
 const campo =

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
-import { Navigate, useNavigate } from "react-router-dom"
+import { Link, Navigate, useNavigate } from "react-router-dom"
 
 import { Header } from "../../components/Header"
 import { Footer } from "../../components/Footer"
@@ -152,6 +152,9 @@ export function LoginPage() {
               <button type="submit" disabled={sending} className={submitButton}>
                 {sending ? "Entrando..." : "Entrar"}
               </button>
+              <Link to="/esqueci-a-senha" className="mt-4 block text-center text-sm font-semibold text-lilas-600">
+                Esqueci minha senha
+              </Link>
             </form>
           )}
         </div>

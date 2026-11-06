@@ -6,17 +6,12 @@ export async function listTeam(): Promise<TeamMember[]> {
   return response.data.data
 }
 
-// A senha temporária volta só nesta resposta (D41)
-export async function createTeamMember(
-  input: NewTeamMemberInput,
-): Promise<{ user: TeamMember; temporaryPassword: string }> {
-  const response = await api.post<{ data: { user: TeamMember; temporaryPassword: string } }>("/users", input)
+// A pessoa recebe um convite por e-mail para criar a senha (D45)
+export async function createTeamMember(input: NewTeamMemberInput): Promise<TeamMember> {
+  const response = await api.post<{ data: TeamMember }>("/users", input)
   return response.data.data
 }
 
-export async function resetMemberPassword(id: string): Promise<string> {
-  const response = await api.post<{ data: { temporaryPassword: string } }>(
-    `/users/${encodeURIComponent(id)}/password-reset`,
-  )
-  return response.data.data.temporaryPassword
+export async function sendPasswordResetLink(id: string): Promise<void> {
+  await api.post(`/users/${encodeURIComponent(id)}/password-reset-link`)
 }

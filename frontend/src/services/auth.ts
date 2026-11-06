@@ -55,3 +55,13 @@ export async function fetchMyLogins(): Promise<LoginEvent[]> {
   const response = await api.get<{ data: LoginEvent[] }>("/me/logins")
   return response.data.data
 }
+
+// "Esqueci minha senha": a resposta é sempre a mesma (D45)
+export async function requestPasswordReset(email: string): Promise<string> {
+  const response = await api.post<{ message: string }>("/password-reset-requests", { email })
+  return response.data.message
+}
+
+export async function completePasswordReset(token: string, newPassword: string): Promise<void> {
+  await api.post("/password-resets", { token, newPassword })
+}
