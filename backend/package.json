@@ -13,7 +13,10 @@
     "test": "vitest run",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy"
+    "db:deploy": "prisma migrate deploy",
+    "user:create-admin": "node --env-file-if-exists=.env src/scripts/createAdmin.ts",
+    "user:reset-access": "node --env-file-if-exists=.env src/scripts/resetAccess.ts",
+    "data:purge": "node --env-file-if-exists=.env src/scripts/purgeExpiredData.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
