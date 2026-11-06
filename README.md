@@ -50,6 +50,9 @@ npm run dev
 | `DATABASE_URL` | Conexão com o PostgreSQL, com o usuário da aplicação (nunca o `postgres`) |
 | `TEST_DATABASE_URL` | Banco dos testes (`kabana_kids_test`). Precisa terminar em `_test`, porque os testes apagam dados |
 | `TWO_FACTOR_ENCRYPTION_KEY` | Chave que criptografa o segredo do 2FA (32 bytes em base64). Gere com o comando do `.env.example` e guarde uma cópia segura |
+| `MAIL_TRANSPORT` | `outbox` (desenvolvimento: e-mails em `backend/storage/mail-outbox/`) ou `smtp` (obrigatório em produção) |
+| `MAIL_FROM` | Remetente dos e-mails, como `Kabana Kids <nao-responda@kabanakids.com.br>` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | Servidor de e-mail, só com `MAIL_TRANSPORT=smtp` |
 | `TRUST_PROXY` | Quantos proxies da hospedagem ficam antes da API (padrão `0`). Define de onde vem o IP real usado no rate limit |
 | `SHADOW_DATABASE_URL` | Banco temporário (`kabana_kids_shadow`) que o `npm run db:migrate` usa para criar migrations |
 
