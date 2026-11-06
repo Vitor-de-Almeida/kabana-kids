@@ -49,6 +49,7 @@ npm run dev
 | `FRONTEND_URL` | Endereço do site; só ele pode chamar a API (CORS) |
 | `DATABASE_URL` | Conexão com o PostgreSQL, com o usuário da aplicação (nunca o `postgres`) |
 | `TEST_DATABASE_URL` | Banco dos testes (`kabana_kids_test`). Precisa terminar em `_test`, porque os testes apagam dados |
+| `TRUST_PROXY` | Quantos proxies da hospedagem ficam antes da API (padrão `0`). Define de onde vem o IP real usado no rate limit |
 | `SHADOW_DATABASE_URL` | Banco temporário (`kabana_kids_shadow`) que o `npm run db:migrate` usa para criar migrations |
 
 ## Comandos úteis

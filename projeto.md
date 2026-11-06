@@ -118,7 +118,7 @@ kabanaKids/
 
 **O que é:** instalar as ferramentas que transformam o código em um sistema funcionando, como montar a cozinha antes de cozinhar.
 
-**0.1** ✅ Criar um **usuário próprio do projeto** no PostgreSQL. Feito: o banco `kabana_kids` pertence ao usuário `app_fernanda_kabana_kids`, que é o usuário do `DATABASE_URL` no `backend/.env`. O superusuário `postgres` não é usado pelo sistema.
+**0.1** ✅ Criar um **usuário próprio do projeto** no PostgreSQL. Feito: o banco `kabana_kids` pertence a um usuário próprio do projeto, que é o usuário do `DATABASE_URL` no `backend/.env`. O superusuário `postgres` não é usado pelo sistema.
 *Por quê:* **menor privilégio**. Se a chave do projeto vazar, ela abre só a gaveta do projeto, não o prédio inteiro.
 *O que é o `.env`:* um bilhete com as senhas do sistema, que fica **só no seu computador** e nunca vai para o Git. O `.env.example` é o mesmo bilhete com os campos em branco, para mostrar o formato.
 
@@ -134,7 +134,7 @@ kabanaKids/
 *O que foi feito:* a cozinha foi montada com Express. Ela já tem o cardápio vazio (`src/routes/v1.ts`), os cabeçalhos de segurança (`helmet`), a lista de convidados (`cors`), o tratamento de erros que nunca mostra detalhes internos e o endereço `GET /up`, que só responde "estou viva".
 *O que ficou para depois:* os crachás (login) chegam na Fase 2, feitos à mão (D21).
 
-**1.3** 🔄 **Tabela e endpoint da lista de espera** (skill `novo-endpoint`). Código pronto, com turma de interesse, mensagem e logs (D23); falta rodar os testes no banco `kabana_kids_test`.
+**1.3** ✅ **Tabela e endpoint da lista de espera** (skill `novo-endpoint`). Pronto, com turma de interesse, mensagem, logs (D23) e testes no banco `kabana_kids_test`.
 
 | Tabela | O que guarda |
 |---|---|
@@ -144,13 +144,13 @@ kabanaKids/
   *Por quê:* sem limite, um robô poderia mandar milhares de cadastros falsos por minuto e lotar a despensa.
 - A resposta **não devolve** os dados da criança. Quem enviou já sabe o que enviou; repetir só cria mais chances de vazar.
 
-**1.4** ⬜ **Ligar o formulário à API** (skill `novo-servico`), incluindo o **proxy do Vite**.
+**1.4** ✅ **Ligar o formulário à API** (skill `novo-servico`), incluindo o **proxy do Vite**. O formulário mostra os erros em cada campo e avisa para não enviar informações de saúde.
 *O que é o proxy:* no seu computador, o site roda num endereço (`localhost:5173`) e a API em outro (`localhost:8000`). O proxy faz o site achar que os dois estão no mesmo lugar, como um garçom que leva o pedido para a cozinha do prédio ao lado sem a família perceber.
 
 **1.5** ⬜ **Política de Privacidade** (skill `nova-pagina`), publicada **antes** de coletar dados reais.
 *Por quê:* a LGPD exige que a família saiba o que acontece com os dados **antes** de entregá-los. O link do formulário hoje aponta para lugar nenhum.
 
-**1.6** ⬜ Resolver as **pendências da LGPD** listadas no fim de `docs/lgpd-dados-pessoais.md` (prazos de guarda dos dados, canal para pedidos das famílias, encarregado de dados).
+**1.6** ⬜ Resolver as **pendências da LGPD** listadas no fim de `docs/lgpd-dados-pessoais.md` (canal para pedidos das famílias, encarregado de dados e rotina que apaga os dados vencidos). Os prazos de guarda já foram definidos (D26).
 
 **1.7** ⬜ **Login e painel da escola antecipados** (D22). A escola vê os cadastros do formulário pelo painel, com login, já na Fase 1. Isso traz para cá o login da Fase 2 (passos 2.1 a 2.6) e o **layout compartilhado** do painel: menu lateral à esquerda e conteúdo à direita, usado pela escola agora e pela família depois, cada um com os seus itens no menu.
 *Por quê:* não mandar dados de crianças por e-mail nem depender do terminal para a escola trabalhar.
