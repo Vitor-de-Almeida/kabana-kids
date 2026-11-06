@@ -29,8 +29,8 @@ Para mudar uma regra, edite o arquivo onde ela mora (nunca crie uma cópia em ou
 
 Atualize esta seção ao concluir cada fase.
 
-- **Fase 1 em andamento.** A landing page está pronta; o formulário (na tela, "Matrícula"; por dentro, lista de espera) ainda não envia dados. A tela de login existe só no visual (D20).
-- **Backend:** trocado de Laravel para Node.js 26 + TypeScript + Express 5 + Prisma + Zod (D18). Existe só o esqueleto (segurança, CORS, tratamento de erros e `GET /up`); ainda não há rotas em `/api/v1` nem tabelas da escola. Login ainda não escolhido (Fase 2).
+- **Fase 1 em andamento.** A landing page está pronta e o formulário (na tela, "Matrícula"; por dentro, lista de espera) envia os dados para a API. A tela de login existe só no visual (D20).
+- **Backend:** trocado de Laravel para Node.js 26 + TypeScript + Express 5 + Prisma + Zod (D18). Já existe a rota pública `POST /api/v1/waitlist-entries` (tabela `waitlist_entries`), com logs e rate limit. Login ainda não escolhido (Fase 2).
 - **Frontend:** sem framework de testes. A verificação é feita com `lint` + `build`.
 - **Mobile:** ainda não iniciado; a tecnologia não foi decidida (ver `docs/decisoes.md`).
 
