@@ -147,10 +147,10 @@ kabanaKids/
 **1.4** ✅ **Ligar o formulário à API** (skill `novo-servico`), incluindo o **proxy do Vite**. O formulário mostra os erros em cada campo e avisa para não enviar informações de saúde.
 *O que é o proxy:* no seu computador, o site roda num endereço (`localhost:5173`) e a API em outro (`localhost:8000`). O proxy faz o site achar que os dois estão no mesmo lugar, como um garçom que leva o pedido para a cozinha do prédio ao lado sem a família perceber.
 
-**1.5** ✅ **Política de Privacidade** (skill `nova-pagina`), publicada **antes** de coletar dados reais. Feita como versão `rascunho`, com os dados que faltam da escola marcados "a confirmar" (D31).
+**1.5** ✅ **Política de Privacidade** (skill `nova-pagina`), publicada **antes** de coletar dados reais. Feita como versão `rascunho`, com os dados que faltam da escola marcados "a confirmar" (D31). A escola enviou os dados em 17/11/2026 (D46); faltam o local dos servidores e a revisão de um advogado.
 *Por quê:* a LGPD exige que a família saiba o que acontece com os dados **antes** de entregá-los. O link do formulário hoje aponta para lugar nenhum.
 
-**1.6** ✅ Resolver as **pendências da LGPD** listadas no fim de `docs/lgpd-dados-pessoais.md` (canal para pedidos das famílias, encarregado de dados e rotina que apaga os dados vencidos). Feito com valores padrão: canal e encarregado na política, rotina `npm run data:purge` (D26, D29). Falta a escola confirmar.
+**1.6** ✅ Resolver as **pendências da LGPD** listadas no fim de `docs/lgpd-dados-pessoais.md` (canal para pedidos das famílias, encarregado de dados e rotina que apaga os dados vencidos). Feito com valores padrão: canal e encarregado na política, rotina `npm run data:purge` (D26, D29). Confirmado pela escola em 17/11/2026 (D46).
 
 **1.7** ✅ **Login e painel da escola antecipados** (D22). Feito: login por cookie, CSRF, limites de tentativas, painel com o menu lateral, lista de cadastros e exclusão a pedido da família, com auditoria (D28). A escola vê os cadastros do formulário pelo painel, com login, já na Fase 1. Isso traz para cá o login da Fase 2 (passos 2.1 a 2.6) e o **layout compartilhado** do painel: menu lateral à esquerda e conteúdo à direita, usado pela escola agora e pela família depois, cada um com os seus itens no menu.
 *Por quê:* não mandar dados de crianças por e-mail nem depender do terminal para a escola trabalhar.
@@ -204,6 +204,11 @@ kabanaKids/
 **2.10** ⬜ **Aba de bloqueios de login** no painel da escola (D37). O `admin` vê quem foi bloqueado (IP, e-mail tentado, quantas tentativas, quando começou e quando termina) e pode tirar o bloqueio.
 *Por quê:* um funcionário que errou a senha várias vezes não precisa esperar horas.
 ⚠️ Hoje o sistema guarda o IP e o e-mail só embaralhados (hash), de propósito. Para mostrá-los, é preciso guardar em texto: atualizar o inventário LGPD **antes**, com prazo curto, e registrar cada desbloqueio na auditoria.
+
+**2.11** ⬜ **Dados da escola editáveis pelo dono** no painel. Pedido do responsável pelo projeto (D46). O dono (`admin`) atualiza razão social, CNPJ, endereço, telefone, e-mail, horário e encarregados de dados sem precisar de programador.
+*Por quê:* hoje esses dados ficam fixos no código (`frontend/src/components/schoolInfo.ts`), e cada mudança exige um novo deploy.
+*Como:* os dados saem do frontend e vão para uma tabela no banco, com uma rota pública só de leitura (para o site e a política) e uma rota de edição só para o `admin`, com validação Zod e registro na auditoria.
+⚠️ E-mail e encarregados fazem parte da Política de Privacidade: ao mudá-los, avaliar se a política ganha uma nova versão.
 
 ---
 
