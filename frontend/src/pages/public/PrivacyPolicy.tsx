@@ -1,27 +1,29 @@
 import { Header } from "../../components/Header"
 import { Footer } from "../../components/Footer"
+import { SCHOOL_INFO } from "../../components/schoolInfo"
 
-// Valores padrão: confirmar com a escola antes de publicar (1.5)
 const ESCOLA = {
-  nome: "Kabana Kids",
-  razaoSocial: "[a confirmar com a escola]",
-  cnpj: "[a confirmar com a escola]",
-  endereco: "Rua das Acácias, 120 — Jardim Aurora, São Paulo/SP",
-  emailPrivacidade: "contato@kabanakids.com.br",
-  encarregado: "Direção da escola",
+  nome: SCHOOL_INFO.name,
+  razaoSocial: SCHOOL_INFO.legalName,
+  cnpj: SCHOOL_INFO.cnpj,
+  endereco: SCHOOL_INFO.address,
+  emailPrivacidade: SCHOOL_INFO.email,
+  encarregado: SCHOOL_INFO.dataProtectionOfficers,
+  // Depende da escolha da hospedagem (D14)
   localDosServidores: "[a confirmar após escolher a hospedagem]",
 }
 
-// Igual a privacyPolicyVersion em backend/src/config.ts
+// Igual a privacyPolicyVersion em backend/src/config.ts.
+// Continua rascunho até a revisão do advogado (D46).
 const VERSAO = "rascunho"
-const ATUALIZADA_EM = "6 de novembro de 2026"
+const ATUALIZADA_EM = "17 de novembro de 2026"
 
 const secoes = [
   {
     titulo: "1. Quem cuida dos seus dados",
     paragrafos: [
       `A ${ESCOLA.nome} (${ESCOLA.razaoSocial}, CNPJ ${ESCOLA.cnpj}), com endereço em ${ESCOLA.endereco}, é a controladora dos dados pessoais tratados neste site.`,
-      `O encarregado pelo tratamento de dados (LGPD, art. 41) é: ${ESCOLA.encarregado}. Contato: ${ESCOLA.emailPrivacidade}.`,
+      `Pessoas encarregadas pelo tratamento de dados (LGPD, art. 41): ${ESCOLA.encarregado}. Contato: ${ESCOLA.emailPrivacidade}.`,
     ],
   },
   {

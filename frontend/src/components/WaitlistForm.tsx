@@ -7,9 +7,17 @@ import { createWaitlistEntry } from "../services/waitlist"
 import type { DesiredClassroom, WaitlistEntryInput } from "../types/waitlist"
 
 const turmas: { value: DesiredClassroom; label: string }[] = [
-  { value: "nursery", label: "Berçário (4 meses a 1 ano)" },
-  { value: "toddler", label: "Maternal (2 a 3 anos)" },
-  { value: "preschool", label: "Pré-escola (4 a 5 anos)" },
+  { value: "nursery", label: "Berçário (4 meses a 1 ano e 11 meses)" },
+  { value: "infant1", label: "Infantil 1 (2 anos)" },
+  { value: "infant2", label: "Infantil 2 (3 anos)" },
+  { value: "infant3", label: "Infantil 3 (4 anos)" },
+  { value: "infant4", label: "Infantil 4 (4 a 5 anos)" },
+  { value: "infant5", label: "Infantil 5 (5 anos)" },
+  { value: "grade1", label: "1º ano do Ensino Fundamental" },
+  { value: "grade2", label: "2º ano do Ensino Fundamental" },
+  { value: "grade3", label: "3º ano do Ensino Fundamental" },
+  { value: "grade4", label: "4º ano do Ensino Fundamental" },
+  { value: "grade5", label: "5º ano do Ensino Fundamental" },
   { value: "undecided", label: "Ainda não sei" },
 ]
 

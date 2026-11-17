@@ -1,4 +1,16 @@
-export type DesiredClassroom = "nursery" | "toddler" | "preschool" | "undecided"
+export type DesiredClassroom =
+  | "nursery"
+  | "infant1"
+  | "infant2"
+  | "infant3"
+  | "infant4"
+  | "infant5"
+  | "grade1"
+  | "grade2"
+  | "grade3"
+  | "grade4"
+  | "grade5"
+  | "undecided"
 
 export type WaitlistEntryInput = {
   guardianName: string

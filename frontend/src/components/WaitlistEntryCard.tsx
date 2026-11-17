@@ -2,8 +2,16 @@ import type { DesiredClassroom, WaitlistEntryForSchool, WaitlistStatus } from ".
 
 const CLASSROOM_LABELS: Record<DesiredClassroom, string> = {
   nursery: "Berçário",
-  toddler: "Maternal",
-  preschool: "Pré-escola",
+  infant1: "Infantil 1",
+  infant2: "Infantil 2",
+  infant3: "Infantil 3",
+  infant4: "Infantil 4",
+  infant5: "Infantil 5",
+  grade1: "1º ano",
+  grade2: "2º ano",
+  grade3: "3º ano",
+  grade4: "4º ano",
+  grade5: "5º ano",
   undecided: "Ainda não sabe",
 }
 
