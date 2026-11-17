@@ -2,8 +2,8 @@ import { z } from "zod"
 
 import { DesiredClassroom } from "../../generated/prisma/enums.ts"
 
-// Idade máxima atendida (pré-escola até 5 anos) com folga
-const MAX_CHILD_AGE_YEARS = 7
+// Idade máxima atendida (5º ano, ~11 anos) com folga
+const MAX_CHILD_AGE_YEARS = 12
 
 function parseBirthDate(value: string): Date {
   return new Date(`${value}T00:00:00Z`)

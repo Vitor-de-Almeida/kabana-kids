@@ -22,7 +22,7 @@ function createEntryAt(createdAt: Date) {
       phone: "(11) 90000-0000",
       childName: "Manu",
       childBirthDate: new Date("2024-03-10"),
-      desiredClassroom: "toddler",
+      desiredClassroom: "infant1",
       consentedAt: createdAt,
       privacyPolicyVersion: "rascunho",
       createdAt,

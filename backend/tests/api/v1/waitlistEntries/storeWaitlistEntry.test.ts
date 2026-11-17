@@ -28,7 +28,7 @@ function validEntry(): Record<string, unknown> {
     phone: "(11) 90000-0000",
     childName: "Manu",
     childBirthDate: dateYearsAgo(2),
-    desiredClassroom: "toddler",
+    desiredClassroom: "infant1",
     message: "Horário da manhã",
     consent: true,
   }
@@ -79,7 +79,7 @@ describe("POST /api/v1/waitlist-entries", () => {
 
     const saved = await prisma.waitlistEntry.findUniqueOrThrow({ where: { id: data.id } })
     expect(saved.guardianName).toBe("Ana Almeida")
-    expect(saved.desiredClassroom).toBe("toddler")
+    expect(saved.desiredClassroom).toBe("infant1")
     expect(saved.message).toBe("Horário da manhã")
   })
 
@@ -169,12 +169,12 @@ describe("POST /api/v1/waitlist-entries", () => {
   // Data de nascimento no futuro ou velha demais
   it("returns 422 for an implausible birth date", async () => {
     const future = await post({ ...validEntry(), childBirthDate: dateYearsAgo(-1) })
-    const tooOld = await post({ ...validEntry(), childBirthDate: dateYearsAgo(10) })
+    const tooOld = await post({ ...validEntry(), childBirthDate: dateYearsAgo(15) })
 
     expect(future.status).toBe(422)
     expect((await readBody(future)).errors.childBirthDate).toEqual(["A data de nascimento não pode estar no futuro."])
     expect(tooOld.status).toBe(422)
-    expect((await readBody(tooOld)).errors.childBirthDate).toEqual(["A criança precisa ter no máximo 7 anos."])
+    expect((await readBody(tooOld)).errors.childBirthDate).toEqual(["A criança precisa ter no máximo 12 anos."])
   })
 
   // Turma fora da lista é recusada
@@ -184,6 +184,20 @@ describe("POST /api/v1/waitlist-entries", () => {
 
     expect(response.status).toBe(422)
     expect(body.errors).toHaveProperty("desiredClassroom")
+  })
+
+  // Aluno do 5º ano (11 anos) pode se cadastrar
+  it("accepts an 11-year-old child for the 5th grade", async () => {
+    const response = await post({ ...validEntry(), childBirthDate: dateYearsAgo(11), desiredClassroom: "grade5" })
+
+    expect(response.status).toBe(201)
+  })
+
+  // Turmas antigas, que a escola não tem, são recusadas
+  it("rejects the old classroom values", async () => {
+    const response = await post({ ...validEntry(), desiredClassroom: "toddler" })
+
+    expect(response.status).toBe(422)
   })
 
   // Rate limit: o 6º envio no mesmo minuto é bloqueado

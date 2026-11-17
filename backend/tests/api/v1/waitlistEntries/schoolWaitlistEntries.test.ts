@@ -21,7 +21,7 @@ function createEntry(childName = "Manu") {
       phone: "(11) 90000-0000",
       childName,
       childBirthDate: new Date("2024-03-10"),
-      desiredClassroom: "toddler",
+      desiredClassroom: "infant1",
       consentedAt: new Date(),
       privacyPolicyVersion: "rascunho",
     },
@@ -122,7 +122,7 @@ describe("school waitlist entries", () => {
 
     expect(response.status).toBe(200)
     expect(body.meta).toEqual({ page: 1, perPage: 20, total: 1 })
-    expect(body.data[0]).toMatchObject({ childName: "Manu", childBirthDate: "2024-03-10", desiredClassroom: "toddler" })
+    expect(body.data[0]).toMatchObject({ childName: "Manu", childBirthDate: "2024-03-10", desiredClassroom: "infant1" })
   })
 
   // Ver em lote gera auditoria, sem dados pessoais
