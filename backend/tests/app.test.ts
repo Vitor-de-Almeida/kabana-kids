@@ -28,10 +28,17 @@ describe("app", () => {
 
   // Rota inexistente: 404 em JSON, sem detalhes internos
   it("returns 404 in JSON for unknown routes", async () => {
-    const response = await fetch(`${server.url}/api/v1/does-not-exist`)
+    const response = await fetch(`${server.url}/does-not-exist`)
 
     expect(response.status).toBe(404)
     expect(await response.json()).toEqual({ message: "Não encontrado." })
+  })
+
+  // Negar por padrão: sem login, a API não revela quais rotas existem
+  it("asks for login on unknown api routes", async () => {
+    const response = await fetch(`${server.url}/api/v1/does-not-exist`)
+
+    expect(response.status).toBe(401)
   })
 
   // Cabeçalhos de segurança ativos e Express escondido

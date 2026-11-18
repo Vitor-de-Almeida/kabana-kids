@@ -5,7 +5,7 @@ Esta é a regra de maior prioridade do projeto. O sistema guarda dados de crian�
 ## Princípios
 
 - **Negar por padrão:** toda rota exige autenticação, exceto as listadas como públicas em `backend/src/routes/v1.ts`.
-- **Menor privilégio:** cada perfil (`admin`, `teacher`, `parent`) acessa só o que precisa.
+- **Menor privilégio:** cada perfil (`admin` = dono, `manager`, `teacher`, `parent`) acessa só o que precisa. As permissões ficam em `backend/src/security/permissions.ts` (D40).
 - **Nunca confie no cliente:** a validação do frontend serve à experiência do usuário; a que protege é a do backend. O app mobile pode ser modificado pelo usuário.
 - **Defesa em profundidade:** autenticação, autorização, validação e auditoria se somam; nenhuma substitui outra.
 - **Minimização:** colete, mostre e guarde o mínimo de dados pessoais possível.
@@ -18,10 +18,11 @@ O login é feito à mão, sem biblioteca de autenticação (D21), e precisa cump
 - **Mobile:** token de API, guardado no armazenamento seguro do sistema (Keychain no iOS, Keystore no Android).
 - **Nunca** guarde token ou sessão em `localStorage`, `sessionStorage`, URL ou log.
 - Tokens têm expiração. O logout revoga o token ou a sessão atual.
-- Login com rate limit (no máximo 5 tentativas por minuto por e-mail + IP).
+- Login com rate limit (no máximo 5 tentativas por minuto por e-mail + IP e 10 por IP), com penalidade que dobra a cada tentativa durante o bloqueio, até 24 horas (D36).
 - Mensagens de erro genéricas: "E-mail ou senha inválidos". Nunca revele se um e-mail está cadastrado (também na recuperação de senha).
-- Senhas: guarde só o hash, com um algoritmo próprio para senhas (Argon2id ou bcrypt), e exija tamanho mínimo. Nunca registre senhas em log nem as retorne em respostas.
-- 2FA para `admin` é recomendado a partir da Fase 2.
+- Senhas: guarde só o hash, com um algoritmo próprio para senhas (Argon2id ou bcrypt), e siga as regras da D32 (tamanho e tipos de caractere, e a nova senha não pode parecer a anterior). Nunca registre senhas em log nem as retorne em respostas.
+- 2FA é obrigatório (D42): dono e gerente desde o primeiro acesso; os demais a partir do 4º login.
+- Senhas são criadas ou redefinidas por **link de uso único no e-mail** (D45): token só como hash, depois do `#` no endereço, com prazo curto. Ninguém vê a senha de ninguém. Só a recuperação do dono usa senha temporária, e só pelo terminal (D41); nunca crie rota HTTP para isso.
 
 ## Autorização
 
@@ -29,7 +30,7 @@ O login é feito à mão, sem biblioteca de autenticação (D21), e precisa cump
 - Restrinja a consulta ao dono do dado: um responsável busca só os próprios filhos (filtro pelo usuário logado no `where` do Prisma), nunca `findUnique({ where: { id } })` sem Policy. IDs vindos do cliente nunca dão acesso por si só (proteção contra IDOR).
 - O perfil (`role`) vem do banco de dados, nunca da requisição. `role` nunca entra num schema Zod de entrada.
 - Esconder um botão no frontend não é segurança: o backend precisa negar a ação.
-- Toda ação de `admin` que vê em lote, exporta, altera ou exclui dados de crianças gera um **registro de auditoria** (quem, qual ação, qual alvo pelo ID, quando), sem copiar os dados pessoais para o log.
+- Toda ação que vê em lote, exporta, altera ou exclui dados de crianças, e toda criação de conta ou mudança de senha, gera um **registro de auditoria** (quem, qual ação, qual alvo pelo ID, quando, origem e resultado), sem copiar dados pessoais nem segredos. A auditoria não se altera (D44).
 
 ## Validação de entrada
 

@@ -2,7 +2,7 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { prisma } from "../../../../src/db.ts"
-import { startTestServer } from "../../../helpers.ts"
+import { FRONTEND_ORIGIN, cleanDatabase, startTestServer } from "../../../helpers.ts"
 
 type ApiBody = {
   data: Record<string, string>
@@ -28,7 +28,7 @@ function validEntry(): Record<string, unknown> {
     phone: "(11) 90000-0000",
     childName: "Manu",
     childBirthDate: dateYearsAgo(2),
-    desiredClassroom: "toddler",
+    desiredClassroom: "infant1",
     message: "Horário da manhã",
     consent: true,
   }
@@ -40,7 +40,7 @@ describe("POST /api/v1/waitlist-entries", () => {
   // API nova (contador de tentativas zerado) e tabela limpa
   beforeEach(async () => {
     server = await startTestServer()
-    await prisma.waitlistEntry.deleteMany()
+    await cleanDatabase()
   })
 
   afterEach(async () => {
@@ -55,7 +55,7 @@ describe("POST /api/v1/waitlist-entries", () => {
   function post(body: unknown): Promise<Response> {
     return fetch(`${server.url}/api/v1/waitlist-entries`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: { "Content-Type": "application/json", Accept: "application/json", Origin: FRONTEND_ORIGIN },
       body: JSON.stringify(body),
     })
   }
@@ -79,7 +79,7 @@ describe("POST /api/v1/waitlist-entries", () => {
 
     const saved = await prisma.waitlistEntry.findUniqueOrThrow({ where: { id: data.id } })
     expect(saved.guardianName).toBe("Ana Almeida")
-    expect(saved.desiredClassroom).toBe("toddler")
+    expect(saved.desiredClassroom).toBe("infant1")
     expect(saved.message).toBe("Horário da manhã")
   })
 
@@ -169,12 +169,19 @@ describe("POST /api/v1/waitlist-entries", () => {
   // Data de nascimento no futuro ou velha demais
   it("returns 422 for an implausible birth date", async () => {
     const future = await post({ ...validEntry(), childBirthDate: dateYearsAgo(-1) })
-    const tooOld = await post({ ...validEntry(), childBirthDate: dateYearsAgo(10) })
+    const tooOld = await post({ ...validEntry(), childBirthDate: dateYearsAgo(15) })
 
     expect(future.status).toBe(422)
     expect((await readBody(future)).errors.childBirthDate).toEqual(["A data de nascimento não pode estar no futuro."])
     expect(tooOld.status).toBe(422)
-    expect((await readBody(tooOld)).errors.childBirthDate).toEqual(["A criança precisa ter no máximo 7 anos."])
+    expect((await readBody(tooOld)).errors.childBirthDate).toEqual(["A criança precisa ter no máximo 13 anos."])
+  })
+
+  // Limite exato: quem faz 14 anos hoje já não entra
+  it("rejects a child who turns 14 today", async () => {
+    const response = await post({ ...validEntry(), childBirthDate: dateYearsAgo(14) })
+
+    expect(response.status).toBe(422)
   })
 
   // Turma fora da lista é recusada
@@ -184,6 +191,30 @@ describe("POST /api/v1/waitlist-entries", () => {
 
     expect(response.status).toBe(422)
     expect(body.errors).toHaveProperty("desiredClassroom")
+  })
+
+  // Aluno do 5º ano que repetiu (13 anos) pode se cadastrar
+  it("accepts a 13-year-old child who repeated the 5th grade", async () => {
+    const response = await post({ ...validEntry(), childBirthDate: dateYearsAgo(13), desiredClassroom: "grade5" })
+
+    expect(response.status).toBe(201)
+  })
+
+  // Véspera dos 14 anos: ainda tem 13, então entra
+  it("accepts a child on the day before turning 14", async () => {
+    const birthDate = new Date(`${dateYearsAgo(14)}T00:00:00Z`)
+    birthDate.setUTCDate(birthDate.getUTCDate() + 1)
+
+    const response = await post({ ...validEntry(), childBirthDate: birthDate.toISOString().slice(0, 10) })
+
+    expect(response.status).toBe(201)
+  })
+
+  // Turmas antigas, que a escola não tem, são recusadas
+  it("rejects the old classroom values", async () => {
+    const response = await post({ ...validEntry(), desiredClassroom: "toddler" })
+
+    expect(response.status).toBe(422)
   })
 
   // Rate limit: o 6º envio no mesmo minuto é bloqueado
@@ -204,7 +235,11 @@ describe("POST /api/v1/waitlist-entries", () => {
     const postFromFakeIp = (attempt: number) =>
       fetch(`${server.url}/api/v1/waitlist-entries`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Forwarded-For": `203.0.113.${attempt}` },
+        headers: {
+          "Content-Type": "application/json",
+          Origin: FRONTEND_ORIGIN,
+          "X-Forwarded-For": `203.0.113.${attempt}`,
+        },
         body: JSON.stringify(validEntry()),
       })
 
@@ -214,6 +249,18 @@ describe("POST /api/v1/waitlist-entries", () => {
     const blocked = await postFromFakeIp(6)
 
     expect(blocked.status).toBe(429)
+  })
+
+  // CSRF: pedido vindo de outro site é recusado
+  it("rejects a submission from another site", async () => {
+    const response = await fetch(`${server.url}/api/v1/waitlist-entries`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "https://evil.example" },
+      body: JSON.stringify(validEntry()),
+    })
+
+    expect(response.status).toBe(403)
+    expect(await prisma.waitlistEntry.count()).toBe(0)
   })
 
   // Rastreabilidade: log com IDs e sem dados pessoais

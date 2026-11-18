@@ -2,8 +2,8 @@ import { z } from "zod"
 
 import { DesiredClassroom } from "../../generated/prisma/enums.ts"
 
-// Idade máxima atendida (pré-escola até 5 anos) com folga
-const MAX_CHILD_AGE_YEARS = 7
+// 5º ano vai até ~11 anos; folga para repetência (D46)
+const MAX_CHILD_AGE_YEARS = 13
 
 function parseBirthDate(value: string): Date {
   return new Date(`${value}T00:00:00Z`)
@@ -13,11 +13,12 @@ function isNotInFuture(value: string): boolean {
   return parseBirthDate(value) <= new Date()
 }
 
+// Quem tem 13 anos e alguns meses passa; quem fez 14, não
 function isWithinMaxAge(value: string): boolean {
-  const oldestAllowed = new Date()
-  oldestAllowed.setUTCFullYear(oldestAllowed.getUTCFullYear() - MAX_CHILD_AGE_YEARS)
+  const nextBirthdayLimit = new Date()
+  nextBirthdayLimit.setUTCFullYear(nextBirthdayLimit.getUTCFullYear() - (MAX_CHILD_AGE_YEARS + 1))
 
-  return parseBirthDate(value) >= oldestAllowed
+  return parseBirthDate(value) > nextBirthdayLimit
 }
 
 // Campo ausente e campo errado recebem mensagens diferentes

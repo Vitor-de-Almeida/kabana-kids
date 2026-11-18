@@ -1,8 +1,12 @@
+import { Link } from "react-router-dom"
+
+import { SCHOOL_INFO } from "./schoolInfo"
+
 const contatos = [
-  { rotulo: "Endereço", valor: "Rua das Acácias, 120 — Jardim Aurora, São Paulo/SP" },
-  { rotulo: "Telefone", valor: "(11) 4002-8922" },
-  { rotulo: "E-mail", valor: "contato@kabanakids.com.br" },
-  { rotulo: "Horário", valor: "Segunda a sexta, 7h30 às 18h30" },
+  { rotulo: "Endereço", valor: SCHOOL_INFO.address },
+  { rotulo: "Telefone", valor: SCHOOL_INFO.phone },
+  { rotulo: "E-mail", valor: SCHOOL_INFO.email },
+  { rotulo: "Horário", valor: SCHOOL_INFO.openingHours },
 ]
 
 export function Footer() {
@@ -21,8 +25,8 @@ export function Footer() {
             </span>
           </div>
           <p className="mt-5 max-w-sm text-tinta-suave">
-            Educação infantil acolhedora, do berçário à pré-escola. Um espaço seguro para as crianças crescerem no
-            próprio ritmo.
+            Do Berçário ao 5º ano, tendo a metodologia Montessori como referência. Um espaço seguro e acolhedor para
+            as crianças crescerem no próprio ritmo.
           </p>
         </div>
 
@@ -59,9 +63,9 @@ export function Footer() {
               </a>
             </li>
             <li>
-              <a id="privacidade" href="#privacidade" className="transition hover:text-lilas-600">
+              <Link to="/politica-de-privacidade" className="transition hover:text-lilas-600">
                 Política de Privacidade
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
@@ -70,7 +74,7 @@ export function Footer() {
       <div className="border-t border-ceu-100">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-6 text-sm text-tinta-suave sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p>© {new Date().getFullYear()} Kabana Kids. Todos os direitos reservados.</p>
-          <p>Fotos e textos são exemplos para o layout do site.</p>
+          <p>Fotos ilustrativas. Depoimentos de exemplo, até a escola enviar os reais.</p>
         </div>
       </div>
     </footer>

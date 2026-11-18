@@ -4,76 +4,91 @@ import { Footer } from "../../components/Footer"
 import { WaitlistForm } from "../../components/WaitlistForm"
 
 const numeros = [
-  { valor: "12", rotulo: "anos cuidando de crianças" },
-  { valor: "1:6", rotulo: "adulto por criança" },
-  { valor: "até 12", rotulo: "crianças por turma" },
-  { valor: "96%", rotulo: "das famílias indicam" },
+  { valor: "3 para 10", rotulo: "professoras por bebês no Berçário" },
+  { valor: "até 14", rotulo: "crianças por turma no Infantil, com 2 professoras" },
+  { valor: "até 10", rotulo: "crianças por turma no Fundamental, com 2 professoras" },
+  { valor: "7h às 19h", rotulo: "de segunda a sexta" },
 ]
 
 const turmas = [
   {
     nome: "Berçário",
-    idade: "4 meses a 1 ano",
-    horario: "7h30 às 18h30",
+    idade: "4 meses a 1 ano e 11 meses",
+    equipe: "10 bebês · 3 professoras",
     cor: "from-ceu-100 to-ceu-200",
-    itens: ["Rotina de sono e alimentação individual", "Relatório diário para a família", "Estímulo motor e sensorial"],
+    itens: ["Acolhimento e construção de vínculos", "Estimulação sensorial e motora", "Rotina no ritmo de cada bebê"],
   },
   {
-    nome: "Maternal",
-    idade: "2 a 3 anos",
-    horario: "7h30 às 18h30",
+    nome: "Educação Infantil",
+    idade: "Infantil 1 a 5 · 2 a 5 anos",
+    equipe: "Até 14 crianças · 2 professoras",
     cor: "from-lilas-100 to-lilas-200",
-    itens: ["Desfralde com apoio da família", "Música, arte e movimento", "Primeiras rotinas em grupo"],
+    itens: ["Autonomia, linguagem e convivência", "Experiências Montessori e brincadeiras", "Transição para o Fundamental"],
+    // Exemplo: aguardando a escola confirmar a turma mais procurada
     destaque: true,
   },
   {
-    nome: "Pré-escola",
-    idade: "4 a 5 anos",
-    horario: "7h30 às 18h30",
+    nome: "Ensino Fundamental",
+    idade: "1º ao 5º ano",
+    equipe: "Até 10 crianças · 2 professoras",
     cor: "from-ceu-100 to-lilas-200",
-    itens: ["Letramento e raciocínio lógico", "Projetos e vida em grupo", "Preparação para o 1º ano"],
+    itens: ["Alfabetização, leitura e escrita", "Raciocínio lógico e pensamento crítico", "Acompanhamento próximo"],
   },
 ]
 
 const rotina = [
-  { hora: "7h30", titulo: "Acolhida", texto: "Chegada tranquila, com brincadeira livre e colo quando precisa." },
-  { hora: "9h00", titulo: "Roda de conversa", texto: "Calendário, combinados do dia e história do dia." },
-  { hora: "10h00", titulo: "Atividade principal", texto: "Projeto da semana: arte, ciências, música ou culinária." },
-  { hora: "12h00", titulo: "Almoço", texto: "Menu preparado por nutricionista, servido em família." },
-  { hora: "13h00", titulo: "Descanso", texto: "Sala escurecida, música suave e respeito ao ritmo de cada um." },
-  { hora: "15h30", titulo: "Parque", texto: "Brincadeira ao ar livre, água, areia e movimento." },
-  { hora: "17h00", titulo: "Saída", texto: "Retrospectiva do dia e conversa com a família." },
+  {
+    etapa: "Berçário",
+    titulo: "Rotina no ritmo do bebê",
+    texto: "Alimentação, mamadeiras, trocas, sono e estimulação organizados conforme as necessidades de cada bebê.",
+  },
+  {
+    etapa: "Infantil",
+    titulo: "Rotina organizada",
+    texto: "Alimentação, higiene, atividades pedagógicas, experiências Montessori, brincadeiras e descanso.",
+  },
+  {
+    etapa: "Fundamental",
+    titulo: "Rotina de estudos",
+    texto: "Leitura, escrita, matemática, projetos, atividades complementares, intervalos e convivência.",
+  },
+  {
+    etapa: "Integral",
+    titulo: "Rotina ampliada",
+    texto: "Quem fica mais tempo tem aprendizagem, alimentação, descanso, brincadeiras e atividades complementares.",
+  },
 ]
 
 const diferenciais = [
   {
     titulo: "Turmas pequenas",
-    texto: "No máximo 12 crianças por sala, para que cada uma seja realmente vista.",
+    texto: "No máximo 14 crianças por sala no Infantil e 10 no Fundamental, sempre com 2 professoras.",
     icone: "M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0Zm4 10c0-3.3-3.6-6-8-6s-8 2.7-8 6",
   },
   {
-    titulo: "Equipe formada",
-    texto: "Professoras com licenciatura em Pedagogia e formação continuada.",
+    titulo: "Equipe integrada",
+    texto: "Profissionais da área pedagógica, administrativa, de coordenação, alimentação e organização.",
     icone: "M4 7l8-4 8 4-8 4-8-4Zm0 6 8 4 8-4M6 10v5",
   },
+  // Exemplo: aguardando a escola confirmar os itens de segurança
   {
     titulo: "Espaço seguro",
     texto: "Acesso controlado, câmeras nas áreas comuns e protocolo de saída.",
     icone: "M12 3 5 6v6c0 4 3 7.4 7 9 4-1.6 7-5 7-9V6l-7-3Z",
   },
   {
-    titulo: "Alimentação saudável",
-    texto: "Cozinha própria e menu semanal aprovado por nutricionista.",
+    titulo: "Alimentação equilibrada",
+    texto: "Rotina de refeições adequada a cada idade, com atenção às restrições alimentares.",
     icone: "M7 3v8a3 3 0 0 0 6 0V3M10 14v7M17 3c1.5 2 1.5 5 0 7v11",
   },
   {
-    titulo: "Comunicação diária",
-    texto: "Fotos, recados e relatórios no portal das famílias, todo dia.",
+    titulo: "Comunicação com a família",
+    texto: "Rotina, comunicados e recados pelo aplicativo Clip Escola, o canal oficial com as professoras.",
     icone: "M4 6h16v10H9l-5 4V6Z",
   },
   {
     titulo: "Adaptação gentil",
-    texto: "Entrada gradual, no tempo da criança, com a família por perto.",
+    texto: "Respeitamos o tempo, os sentimentos e as necessidades de cada criança nessa nova etapa.",
     icone: "M12 20s-7-4.4-7-9.5A3.7 3.7 0 0 1 12 8a3.7 3.7 0 0 1 7 2.5C19 15.6 12 20 12 20Z",
   },
 ]
@@ -84,12 +99,13 @@ const galeria = [
   { src: "/images/kabana-galeria-3.jpg", alt: "Criança empilhando blocos macios em sala clara" },
 ]
 
+// Exemplo: virão das famílias, com autorização escrita
 const depoimentos = [
   {
     texto:
       "A adaptação da Manu foi muito tranquila. Em duas semanas ela já entrava sorrindo e contando o que ia fazer no dia.",
     nome: "Ana Almeida",
-    papel: "mãe da Manu, Maternal",
+    papel: "mãe da Manu, Infantil 1",
   },
   {
     texto:
@@ -101,7 +117,7 @@ const depoimentos = [
     texto:
       "Turma pequena faz toda diferença. As professoras conhecem cada criança pelo nome, pelo jeito e pelo que ela gosta.",
     nome: "Carla Menezes",
-    papel: "mãe da Alice, Pré-escola",
+    papel: "mãe da Alice, Infantil 4",
   },
 ]
 
@@ -130,6 +146,7 @@ export function LandingPage() {
 
         <div className="mx-auto grid max-w-6xl items-center gap-14 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:py-24">
           <div>
+            {/* Exemplo: aguardando a escola confirmar o ano das matrículas */}
             <span className="inline-flex items-center gap-2 rounded-full bg-ceu-100 px-4 py-2 text-sm font-bold text-ceu-700">
               <span className="h-2 w-2 rounded-full bg-ceu-500" />
               Matrículas abertas para 2027
@@ -141,8 +158,8 @@ export function LandingPage() {
             </h1>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-tinta-suave">
-              Educação infantil acolhedora, do berçário à pré-escola. Turmas pequenas, equipe formada em Pedagogia e
-              comunicação diária com as famílias.
+              Do Berçário ao 5º ano, tendo a metodologia Montessori como referência. Turmas pequenas, ambiente
+              acolhedor e parceria próxima com as famílias.
             </p>
 
             <div className="mt-9 flex flex-wrap gap-4">
@@ -161,9 +178,9 @@ export function LandingPage() {
             </div>
 
             <div className="mt-10 flex flex-wrap gap-3">
-              <Selo>Turmas de até 12 crianças</Selo>
-              <Selo>Acesso controlado</Selo>
-              <Selo>Cozinha própria</Selo>
+              <Selo>Turmas de até 14 crianças</Selo>
+              <Selo>Metodologia Montessori</Selo>
+              <Selo>Inglês, Libras e Capoeira</Selo>
             </div>
           </div>
 
@@ -217,18 +234,23 @@ export function LandingPage() {
           <div className="order-1 lg:order-2">
             <p className="text-sm font-bold uppercase tracking-widest text-ceu-500">Sobre a Kabana</p>
             <h2 className="font-display mt-3 text-3xl font-bold text-tinta sm:text-4xl">
-              Cuidado de casa, com olhar de escola
+              Muito mais que uma escola
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-tinta-suave">
-              A Kabana Kids nasceu do desejo de criar uma escola onde cada criança fosse conhecida pelo nome, pelo jeito
-              e pelo próprio ritmo. Aqui o brincar é sério: é assim que a criança aprende sobre o mundo, sobre os outros
-              e sobre si mesma.
+              O Centro de Educação Infantil Kabana Kids, em Piraquara (PR), é dedicado à educação, ao cuidado e ao
+              desenvolvimento integral das crianças. Oferecemos um ambiente seguro, acolhedor, afetivo e estimulante,
+              onde cada criança é respeitada em sua individualidade e tem a oportunidade de aprender, brincar, descobrir
+              e crescer.
+            </p>
+            <p className="mt-4 text-lg leading-relaxed text-tinta-suave">
+              Temos como referência a metodologia Montessori, que vê a criança como protagonista da própria
+              aprendizagem. Valorizamos a autonomia, a liberdade com responsabilidade e as experiências concretas.
             </p>
             <ul className="mt-8 space-y-4">
               {[
-                "Projeto pedagógico que une o brincar livre a atividades intencionais",
-                "Portas abertas: as famílias podem visitar e acompanhar o dia",
-                "Escuta ativa: reuniões individuais a cada trimestre",
+                "Meio período, períodos intermediários, período integral e contraturno escolar",
+                "Inglês, Libras, Capoeira, Yoga, musicalização, artes e psicomotricidade",
+                "Parceria com as famílias, com comunicação e transparência",
               ].map((item) => (
                 <li key={item} className="flex gap-3 text-tinta-suave">
                   <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-ceu-100 text-ceu-600">
@@ -253,7 +275,7 @@ export function LandingPage() {
               Um grupo para cada fase da infância
             </h2>
             <p className="mt-5 text-lg text-tinta-suave">
-              Todas as turmas funcionam em período integral, com opção de meio período pela manhã ou pela tarde.
+              Do Berçário ao 5º ano, em meio período, períodos intermediários, período integral ou contraturno.
             </p>
           </div>
 
@@ -275,7 +297,7 @@ export function LandingPage() {
                 <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${turma.cor}`} />
                 <h3 className="font-display mt-6 text-2xl font-bold text-tinta">{turma.nome}</h3>
                 <p className="mt-1 font-semibold text-lilas-500">{turma.idade}</p>
-                <p className="mt-1 text-sm text-tinta-suave">Integral · {turma.horario}</p>
+                <p className="mt-1 text-sm text-tinta-suave">{turma.equipe}</p>
 
                 <ul className="mt-6 flex-1 space-y-3">
                   {turma.itens.map((item) => (
@@ -304,18 +326,18 @@ export function LandingPage() {
           <p className="text-sm font-bold uppercase tracking-widest text-ceu-500">Rotina</p>
           <h2 className="font-display mt-3 text-3xl font-bold text-tinta sm:text-4xl">Um dia na Kabana Kids</h2>
           <p className="mt-5 text-lg text-tinta-suave">
-            A previsibilidade da rotina dá segurança para a criança se soltar e explorar.
+            Cada etapa tem a sua rotina, adaptada à idade e às necessidades das crianças.
           </p>
         </div>
 
         <ol className="relative mt-14 space-y-8 border-l-2 border-dashed border-ceu-200 pl-8 sm:pl-12">
           {rotina.map((item) => (
-            <li key={item.hora} className="relative">
+            <li key={item.etapa} className="relative">
               <span className="absolute -left-[2.55rem] top-1 grid h-8 w-8 place-items-center rounded-full bg-white ring-2 ring-lilas-200 sm:-left-[3.55rem]">
                 <span className="h-2.5 w-2.5 rounded-full bg-lilas-400" />
               </span>
               <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-5">
-                <span className="font-display w-16 shrink-0 text-lg font-bold text-ceu-600">{item.hora}</span>
+                <span className="font-display w-28 shrink-0 text-lg font-bold text-ceu-600">{item.etapa}</span>
                 <div>
                   <h3 className="font-display text-xl font-bold text-tinta">{item.titulo}</h3>
                   <p className="mt-1 text-tinta-suave">{item.texto}</p>
@@ -419,9 +441,10 @@ export function LandingPage() {
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-tinta-suave">
               As turmas são pequenas e as vagas costumam acabar antes do início do ano. Deixe seus dados e nossa equipe
-              entra em contato para conversar e agendar uma visita.
+              entra em contato em até 2 dias úteis para conversar e agendar uma visita.
             </p>
 
+            {/* Exemplo: aguardando a escola confirmar estas condições */}
             <ul className="mt-8 space-y-4">
               {[
                 "Sem taxa e sem compromisso de matrícula",

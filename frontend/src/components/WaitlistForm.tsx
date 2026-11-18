@@ -2,15 +2,22 @@ import { useState } from "react"
 import type { FormEvent } from "react"
 
 import { FieldError } from "./FieldError"
-import { toApiError } from "../services/apiError"
-import type { ApiError } from "../services/apiError"
+import { describeApiError, toApiError } from "../services/apiError"
 import { createWaitlistEntry } from "../services/waitlist"
 import type { DesiredClassroom, WaitlistEntryInput } from "../types/waitlist"
 
 const turmas: { value: DesiredClassroom; label: string }[] = [
-  { value: "nursery", label: "Berçário (4 meses a 1 ano)" },
-  { value: "toddler", label: "Maternal (2 a 3 anos)" },
-  { value: "preschool", label: "Pré-escola (4 a 5 anos)" },
+  { value: "nursery", label: "Berçário (4 meses a 1 ano e 11 meses)" },
+  { value: "infant1", label: "Infantil 1 (2 anos)" },
+  { value: "infant2", label: "Infantil 2 (3 anos)" },
+  { value: "infant3", label: "Infantil 3 (4 anos)" },
+  { value: "infant4", label: "Infantil 4 (4 a 5 anos)" },
+  { value: "infant5", label: "Infantil 5 (5 anos)" },
+  { value: "grade1", label: "1º ano do Ensino Fundamental" },
+  { value: "grade2", label: "2º ano do Ensino Fundamental" },
+  { value: "grade3", label: "3º ano do Ensino Fundamental" },
+  { value: "grade4", label: "4º ano do Ensino Fundamental" },
+  { value: "grade5", label: "5º ano do Ensino Fundamental" },
   { value: "undecided", label: "Ainda não sei" },
 ]
 
@@ -46,20 +53,6 @@ function readForm(form: HTMLFormElement): WaitlistEntryInput {
   }
 }
 
-function errorMessage(error: ApiError): string {
-  switch (error.kind) {
-    case "validation":
-    case "rateLimit":
-      return error.message
-    case "network":
-      return "Não conseguimos falar com a escola agora. Confira sua internet e tente de novo."
-    case "unexpected":
-      return error.requestId
-        ? `Algo deu errado do nosso lado. Tente de novo em alguns minutos. Se continuar, fale com a escola e informe o código ${error.requestId}.`
-        : "Algo deu errado do nosso lado. Tente de novo em alguns minutos."
-  }
-}
-
 export function WaitlistForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "success">("idle")
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
@@ -79,7 +72,7 @@ export function WaitlistForm() {
       const apiError = toApiError(error)
       const errors = apiError.kind === "validation" ? apiError.fieldErrors : {}
       setFieldErrors(errors)
-      setFormError(errorMessage(apiError))
+      setFormError(describeApiError(apiError))
       setStatus("idle")
 
       const firstInvalid = Object.entries(inputIds).find(([field]) => errors[field])
@@ -215,7 +208,13 @@ export function WaitlistForm() {
         />
         <span>
           Autorizo a Kabana Kids a usar meus dados para contato sobre a matrícula, conforme a{" "}
-          <a href="#privacidade" className="font-semibold text-lilas-600 underline decoration-lilas-300">
+          {/* Nova aba: a família não perde o que já preencheu */}
+          <a
+            href="/politica-de-privacidade"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-lilas-600 underline decoration-lilas-300"
+          >
             Política de Privacidade
           </a>
           .

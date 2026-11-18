@@ -147,15 +147,15 @@ kabanaKids/
 **1.4** ✅ **Ligar o formulário à API** (skill `novo-servico`), incluindo o **proxy do Vite**. O formulário mostra os erros em cada campo e avisa para não enviar informações de saúde.
 *O que é o proxy:* no seu computador, o site roda num endereço (`localhost:5173`) e a API em outro (`localhost:8000`). O proxy faz o site achar que os dois estão no mesmo lugar, como um garçom que leva o pedido para a cozinha do prédio ao lado sem a família perceber.
 
-**1.5** ⬜ **Política de Privacidade** (skill `nova-pagina`), publicada **antes** de coletar dados reais.
+**1.5** ✅ **Política de Privacidade** (skill `nova-pagina`), publicada **antes** de coletar dados reais. Feita como versão `rascunho`, com os dados que faltam da escola marcados "a confirmar" (D31). A escola enviou os dados em 17/11/2026 (D46); faltam o local dos servidores e a revisão de um advogado.
 *Por quê:* a LGPD exige que a família saiba o que acontece com os dados **antes** de entregá-los. O link do formulário hoje aponta para lugar nenhum.
 
-**1.6** ⬜ Resolver as **pendências da LGPD** listadas no fim de `docs/lgpd-dados-pessoais.md` (canal para pedidos das famílias, encarregado de dados e rotina que apaga os dados vencidos). Os prazos de guarda já foram definidos (D26).
+**1.6** ✅ Resolver as **pendências da LGPD** listadas no fim de `docs/lgpd-dados-pessoais.md` (canal para pedidos das famílias, encarregado de dados e rotina que apaga os dados vencidos). Feito com valores padrão: canal e encarregado na política, rotina `npm run data:purge` (D26, D29). Confirmado pela escola em 17/11/2026 (D46).
 
-**1.7** ⬜ **Login e painel da escola antecipados** (D22). A escola vê os cadastros do formulário pelo painel, com login, já na Fase 1. Isso traz para cá o login da Fase 2 (passos 2.1 a 2.6) e o **layout compartilhado** do painel: menu lateral à esquerda e conteúdo à direita, usado pela escola agora e pela família depois, cada um com os seus itens no menu.
+**1.7** ✅ **Login e painel da escola antecipados** (D22). Feito: login por cookie, CSRF, limites de tentativas, painel com o menu lateral, lista de cadastros e exclusão a pedido da família, com auditoria (D28). A escola vê os cadastros do formulário pelo painel, com login, já na Fase 1. Isso traz para cá o login da Fase 2 (passos 2.1 a 2.6) e o **layout compartilhado** do painel: menu lateral à esquerda e conteúdo à direita, usado pela escola agora e pela família depois, cada um com os seus itens no menu.
 *Por quê:* não mandar dados de crianças por e-mail nem depender do terminal para a escola trabalhar.
 
-**1.8** ⬜ **Deploy da Fase 1** (Parte 4).
+**1.8** ⬜ **Deploy da Fase 1** (Parte 4). Depende da escolha da hospedagem (D14).
 
 ---
 
@@ -165,9 +165,10 @@ kabanaKids/
 
 | Tabela | O que guarda (planejado) |
 |---|---|
-| `users` | `name`, `email`, `password` (embaralhada) e `role` (`admin`, `teacher`, `parent`) |
-| `students` | `name`, `birth_date` |
-| `guardian_student` | Quem é responsável por qual criança (❓ ver decisões pendentes) |
+| `users` | `name`, `email`, `password` (embaralhada) e `role` (`admin` = dono, `manager`, `teacher`, `parent`). Já existe (D40) |
+| `students` | `name`, `birth_date` e a família (`family_id`) |
+| `families` | A família, que agrupa os filhos e os acessos (D12) |
+| `family_members` | Quem tem acesso à família: o responsável principal e até 2 indicados por ele (D12) |
 | `announcements` | `title`, `body`, `author_id`, `published_at` |
 
 > Todo campo com dado pessoal entra **antes** no inventário `docs/lgpd-dados-pessoais.md`.
@@ -175,7 +176,7 @@ kabanaKids/
 **2.1** **Senhas embaralhadas (hash).**
 *O que é:* a senha nunca é guardada como foi digitada. Ela passa por uma "máquina de moer" que só funciona num sentido: dá para conferir se uma senha está certa, mas não dá para descobrir a senha olhando a ficha. Usaremos o **Argon2id**, um algoritmo feito para senhas que o próprio Node já traz, sem pacote extra (D21).
 
-**2.2** **Perfis (`role`).** O perfil de cada pessoa vem **do banco**, nunca do pedido que o navegador envia.
+**2.2** ✅ **Perfis (`role`).** Antecipado: dono, gerente, professor e pais, com permissões num lugar só (D40). O perfil de cada pessoa vem **do banco**, nunca do pedido que o navegador envia.
 *Por quê:* se o navegador pudesse dizer "eu sou admin", qualquer um diria.
 
 **2.3** **Autorização por dono (Policies).** Toda consulta pergunta "isto é seu?": uma mãe vê os filhos dela; um professor, as turmas dele. Trocar um número no endereço não pode dar acesso a outra família.
@@ -192,13 +193,23 @@ kabanaKids/
 
 **2.7** **Auditoria:** toda vez que um `admin` vê em lote, exporta, altera ou apaga dados de crianças, o sistema anota quem fez, o quê e quando, como o livro de registro de uma portaria.
 
-**2.8** Recomendado: **verificação em duas etapas (2FA)** para `admin`: além da senha, um código no celular.
+**2.8** ✅ **Verificação em duas etapas (2FA)** para `admin`: além da senha, um código no celular. Antecipado para a Fase 1 e obrigatório (D33).
 
 **2.9** **Criação da conta da família** (D20). Só acontece **depois** de a escola efetivar a matrícula, por um de dois caminhos:
 - **(a) A escola cria a conta** no painel de gerenciamento.
 - **(b) A escola gera um código** e entrega à família, que cria a própria conta com ele.
 *Por quê:* sem cadastro aberto, um estranho não consegue criar uma conta e "se ligar" a uma criança.
 ⚠️ **O código é uma chave:** precisa ser aleatório e longo, de **uso único**, ter **prazo de validade**, estar ligado a uma matrícula, ser guardado como **hash** (como a senha) e ter **rate limit** na tela onde é usado. Assim, um código vazado ou adivinhado não abre a ficha de ninguém.
+
+
+**2.10** ⬜ **Aba de bloqueios de login** no painel da escola (D37). O `admin` vê quem foi bloqueado (IP, e-mail tentado, quantas tentativas, quando começou e quando termina) e pode tirar o bloqueio.
+*Por quê:* um funcionário que errou a senha várias vezes não precisa esperar horas.
+⚠️ Hoje o sistema guarda o IP e o e-mail só embaralhados (hash), de propósito. Para mostrá-los, é preciso guardar em texto: atualizar o inventário LGPD **antes**, com prazo curto, e registrar cada desbloqueio na auditoria.
+
+**2.11** ⬜ **Dados da escola editáveis pelo dono** no painel. Pedido do responsável pelo projeto (D46). O dono (`admin`) atualiza razão social, CNPJ, endereço, telefone, e-mail, horário e encarregados de dados sem precisar de programador.
+*Por quê:* hoje esses dados ficam fixos no código (`frontend/src/components/schoolInfo.ts`), e cada mudança exige um novo deploy.
+*Como:* os dados saem do frontend e vão para uma tabela no banco, com uma rota pública só de leitura (para o site e a política) e uma rota de edição só para o `admin`, com validação Zod e registro na auditoria.
+⚠️ E-mail e encarregados fazem parte da Política de Privacidade: ao mudá-los, avaliar se a política ganha uma nova versão.
 
 ---
 
@@ -268,6 +279,14 @@ Junto com isso, configure o **CORS** e o login para aceitarem pedidos **só** do
 
 ---
 
+## Lembretes para o final do projeto
+
+Coisas combinadas para não esquecer antes de considerar o sistema pronto:
+
+- [ ] **Cópia da auditoria fora do servidor (D44).** Hoje a auditoria e o histórico de logins têm uma trava dentro do próprio banco, mas quem tem acesso total ao servidor do banco ainda consegue desligá-la. Para a auditoria valer mesmo contra quem controla o servidor, os registros precisam ser copiados, todo dia, para um lugar separado que só aceita gravar e nunca apagar (por exemplo, um armazenamento com bloqueio de exclusão). Exige escolher um serviço (tecnologia nova) e atualizar o inventário LGPD.
+
+---
+
 ## Parte 5 — Futuro
 
 - **App de celular:** React Native ou Flutter, depois que a Fase 4 estiver estável (decisão D09).
@@ -279,7 +298,7 @@ Junto com isso, configure o **CORS** e o login para aceitarem pedidos **só** do
 
 Estas perguntas precisam da sua resposta antes da etapa correspondente. Elas também estão registradas em `docs/decisoes.md`.
 
-1. **Quantos responsáveis por criança?** (antes da Fase 2) A versão antiga previa um responsável por criança (`user_id` em `students`). Na prática, mãe e pai costumam querer acesso. A proposta é a tabela `guardian_student`, que permite vários (D12).
+1. ✅ **Quantos responsáveis por criança?** Decidido em 18/11/2026 (D12): até 3 acessos por família no total (o principal + 2 indicados por ele), valendo para todos os filhos. Indicados na matrícula e liberados pela escola.
 2. **Onde ficam os servidores?** (antes do deploy) Railway e Render não oferecem servidores no Brasil (confirme na contratação), então os dados ficariam no exterior. A LGPD permite, mas com condições (transferência internacional, artigo 33). Vale confirmar com quem cuida da parte jurídica da escola ou escolher uma hospedagem com servidores no Brasil (D14).
 3. **Dados de saúde na matrícula** (antes da Fase 3): veja 3.2.
 4. **Fotos com várias crianças** (antes da Fase 4): veja 4.3.
