@@ -166,8 +166,9 @@ kabanaKids/
 | Tabela | O que guarda (planejado) |
 |---|---|
 | `users` | `name`, `email`, `password` (embaralhada) e `role` (`admin` = dono, `manager`, `teacher`, `parent`). Já existe (D40) |
-| `students` | `name`, `birth_date` |
-| `guardian_student` | Quem é responsável por qual criança (❓ ver decisões pendentes) |
+| `students` | `name`, `birth_date` e a família (`family_id`) |
+| `families` | A família, que agrupa os filhos e os acessos (D12) |
+| `family_members` | Quem tem acesso à família: o responsável principal e até 2 indicados por ele (D12) |
 | `announcements` | `title`, `body`, `author_id`, `published_at` |
 
 > Todo campo com dado pessoal entra **antes** no inventário `docs/lgpd-dados-pessoais.md`.
@@ -297,7 +298,7 @@ Coisas combinadas para não esquecer antes de considerar o sistema pronto:
 
 Estas perguntas precisam da sua resposta antes da etapa correspondente. Elas também estão registradas em `docs/decisoes.md`.
 
-1. **Quantos responsáveis por criança?** (antes da Fase 2) A versão antiga previa um responsável por criança (`user_id` em `students`). Na prática, mãe e pai costumam querer acesso. A proposta é a tabela `guardian_student`, que permite vários (D12).
+1. ✅ **Quantos responsáveis por criança?** Decidido em 18/11/2026 (D12): até 3 acessos por família no total (o principal + 2 indicados por ele), valendo para todos os filhos. Indicados na matrícula e liberados pela escola.
 2. **Onde ficam os servidores?** (antes do deploy) Railway e Render não oferecem servidores no Brasil (confirme na contratação), então os dados ficariam no exterior. A LGPD permite, mas com condições (transferência internacional, artigo 33). Vale confirmar com quem cuida da parte jurídica da escola ou escolher uma hospedagem com servidores no Brasil (D14).
 3. **Dados de saúde na matrícula** (antes da Fase 3): veja 3.2.
 4. **Fotos com várias crianças** (antes da Fase 4): veja 4.3.
