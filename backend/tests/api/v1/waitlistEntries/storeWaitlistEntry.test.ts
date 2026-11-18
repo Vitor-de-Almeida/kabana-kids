@@ -174,12 +174,12 @@ describe("POST /api/v1/waitlist-entries", () => {
     expect(future.status).toBe(422)
     expect((await readBody(future)).errors.childBirthDate).toEqual(["A data de nascimento não pode estar no futuro."])
     expect(tooOld.status).toBe(422)
-    expect((await readBody(tooOld)).errors.childBirthDate).toEqual(["A criança precisa ter no máximo 11 anos."])
+    expect((await readBody(tooOld)).errors.childBirthDate).toEqual(["A criança precisa ter no máximo 13 anos."])
   })
 
-  // Limite exato: quem faz 12 anos hoje já não entra
-  it("rejects a child who turns 12 today", async () => {
-    const response = await post({ ...validEntry(), childBirthDate: dateYearsAgo(12) })
+  // Limite exato: quem faz 14 anos hoje já não entra
+  it("rejects a child who turns 14 today", async () => {
+    const response = await post({ ...validEntry(), childBirthDate: dateYearsAgo(14) })
 
     expect(response.status).toBe(422)
   })
@@ -193,16 +193,16 @@ describe("POST /api/v1/waitlist-entries", () => {
     expect(body.errors).toHaveProperty("desiredClassroom")
   })
 
-  // Aluno do 5º ano (11 anos) pode se cadastrar
-  it("accepts an 11-year-old child for the 5th grade", async () => {
-    const response = await post({ ...validEntry(), childBirthDate: dateYearsAgo(11), desiredClassroom: "grade5" })
+  // Aluno do 5º ano que repetiu (13 anos) pode se cadastrar
+  it("accepts a 13-year-old child who repeated the 5th grade", async () => {
+    const response = await post({ ...validEntry(), childBirthDate: dateYearsAgo(13), desiredClassroom: "grade5" })
 
     expect(response.status).toBe(201)
   })
 
-  // Véspera dos 12 anos: ainda tem 11, então entra
-  it("accepts a child on the day before turning 12", async () => {
-    const birthDate = new Date(`${dateYearsAgo(12)}T00:00:00Z`)
+  // Véspera dos 14 anos: ainda tem 13, então entra
+  it("accepts a child on the day before turning 14", async () => {
+    const birthDate = new Date(`${dateYearsAgo(14)}T00:00:00Z`)
     birthDate.setUTCDate(birthDate.getUTCDate() + 1)
 
     const response = await post({ ...validEntry(), childBirthDate: birthDate.toISOString().slice(0, 10) })
