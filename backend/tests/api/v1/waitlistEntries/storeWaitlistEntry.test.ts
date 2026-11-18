@@ -174,7 +174,14 @@ describe("POST /api/v1/waitlist-entries", () => {
     expect(future.status).toBe(422)
     expect((await readBody(future)).errors.childBirthDate).toEqual(["A data de nascimento não pode estar no futuro."])
     expect(tooOld.status).toBe(422)
-    expect((await readBody(tooOld)).errors.childBirthDate).toEqual(["A criança precisa ter no máximo 12 anos."])
+    expect((await readBody(tooOld)).errors.childBirthDate).toEqual(["A criança precisa ter no máximo 11 anos."])
+  })
+
+  // Limite exato: quem faz 12 anos hoje já não entra
+  it("rejects a child who turns 12 today", async () => {
+    const response = await post({ ...validEntry(), childBirthDate: dateYearsAgo(12) })
+
+    expect(response.status).toBe(422)
   })
 
   // Turma fora da lista é recusada
@@ -189,6 +196,16 @@ describe("POST /api/v1/waitlist-entries", () => {
   // Aluno do 5º ano (11 anos) pode se cadastrar
   it("accepts an 11-year-old child for the 5th grade", async () => {
     const response = await post({ ...validEntry(), childBirthDate: dateYearsAgo(11), desiredClassroom: "grade5" })
+
+    expect(response.status).toBe(201)
+  })
+
+  // Véspera dos 12 anos: ainda tem 11, então entra
+  it("accepts a child on the day before turning 12", async () => {
+    const birthDate = new Date(`${dateYearsAgo(12)}T00:00:00Z`)
+    birthDate.setUTCDate(birthDate.getUTCDate() + 1)
+
+    const response = await post({ ...validEntry(), childBirthDate: birthDate.toISOString().slice(0, 10) })
 
     expect(response.status).toBe(201)
   })
