@@ -211,6 +211,11 @@ kabanaKids/
 *Como:* os dados saem do frontend e vão para uma tabela no banco, com uma rota pública só de leitura (para o site e a política) e uma rota de edição só para o `admin`, com validação Zod e registro na auditoria.
 ⚠️ E-mail e encarregados fazem parte da Política de Privacidade: ao mudá-los, avaliar se a política ganha uma nova versão.
 
+**💡 Ideias para decidir nesta fase** (anotadas em 18/11/2026, sem implementar):
+- **"Entrar com Google" só para as famílias.** Pais esquecem senhas. Para dono e equipe, continua senha + 2FA: quem invadir o Gmail não pode entrar no painel (D41).
+  ⚠️ Antes de decidir: precisa do domínio do deploy, de um projeto no Google Cloud, da Política de Privacidade atualizada (o Google fica sabendo de cada login, fora do Brasil) e de cuidado ao ligar a conta Google à conta da família, para ninguém tomar a conta de outra pessoa.
+- **Passkeys (chaves de acesso).** Entrar com a digital ou o rosto do celular, sem senha e sem depender de outra empresa. Resiste a sites falsos (phishing). Provavelmente exige uma biblioteca nova, então precisa de autorização.
+
 ---
 
 ### Fase 3 — Matrícula ⬜

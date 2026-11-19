@@ -36,7 +36,7 @@ Atualize esta seção ao concluir cada fase.
 
 ## Regras invioláveis
 
-1. **Não instale, remova nem atualize dependências** (npm) e não introduza novas tecnologias sem autorização explícita. Instalar as dependências já declaradas (`npm install`) é permitido. Os pacotes autorizados do backend estão na D18 e nas autorizações seguintes (`cookie-parser` na D21, `nodemailer` na D45).
+1. **Não instale, remova nem atualize dependências** (npm) e não introduza novas tecnologias sem autorização explícita. Instalar as dependências já declaradas (`npm install`) é permitido. Os pacotes autorizados do backend estão na D18 e nas autorizações seguintes (`cookie-parser` na D21, `nodemailer` na D45). No frontend, `qrcode.react` foi autorizado na D47.
 2. **Não altere comportamento existente** sem entender como ele funciona e sem que a tarefa peça. Leia o código envolvido antes de mudar.
 3. **Não presuma.** Se algo não está no código nem na documentação, pergunte.
 4. **Segurança primeiro.** Siga `.claude/rules/seguranca.md`. Entre conveniência e segurança, escolha segurança e explique a troca.
