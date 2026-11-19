@@ -1,5 +1,6 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
+import { QRCodeSVG } from "qrcode.react"
 
 import { FieldError } from "./FieldError"
 import { useAuth } from "../hooks/useAuth"
@@ -89,17 +90,24 @@ export function TwoFactorSetupCard() {
             Authenticator ou o Microsoft Authenticator.
           </p>
           <p>
-            <strong className="text-tinta">2.</strong> No app, escolha "inserir chave de configuração" e digite a chave
-            abaixo. Se estiver no celular, toque em{" "}
+            <strong className="text-tinta">2.</strong> No app, toque em adicionar conta e aponte a câmera para o código
+            abaixo. No Microsoft Authenticator, escolha "Outra conta (Google, Facebook etc.)".
+          </p>
+          {/* Gerado no próprio navegador: o segredo não sai daqui */}
+          <div className="mx-auto w-fit rounded-2xl bg-white p-4 text-tinta shadow-lg shadow-ceu-100/60">
+            <QRCodeSVG value={setup.setupUri} size={192} fgColor="currentColor" bgColor="transparent" title="QR Code para o app autenticador" />
+          </div>
+          <p>
+            Sem câmera? No celular, toque em{" "}
             <a href={setup.setupUri} className="font-semibold text-lilas-600 underline">
               abrir no app
             </a>
-            .
+            . Ou digite esta chave no app ("inserir chave de configuração" ou "insira o código manualmente"):
           </p>
           <p className="rounded-2xl bg-ceu-50 p-4 text-center font-mono text-lg font-bold tracking-wider break-all text-tinta">
             {groupInFours(setup.secret)}
           </p>
-          <p>Não mostre esta chave a ninguém e não tire foto dela.</p>
+          <p>Não mostre o QR Code nem a chave a ninguém, e não tire foto deles.</p>
           <div>
             <label className="mb-2 block font-semibold text-tinta" htmlFor="codigo2fa">
               <strong>3.</strong> Digite o código de 6 números que o app mostra
