@@ -3,6 +3,7 @@ import { AuthProvider } from "./components/AuthProvider"
 import { PanelLayout } from "./components/PanelLayout"
 import { RequireAuth } from "./components/RequireAuth"
 import { RequireAccountReady } from "./components/RequireAccountReady"
+import { ScrollToTop } from "./components/ScrollToTop"
 import { LandingPage } from "./pages/public/Landing"
 import { PrivacyPolicyPage } from "./pages/public/PrivacyPolicy"
 import { LoginPage } from "./pages/auth/Login"
@@ -16,6 +17,7 @@ import { WaitlistEntriesPage } from "./pages/school/WaitlistEntries"
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <Routes>
           <Route path="/" element={<LandingPage />} />
